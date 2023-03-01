@@ -1,0 +1,41 @@
+[general]
+login_delay = 20
+# seconds to sleep in-between PTC authing on one proxy
+
+chansey_worker_stats = false
+worker_stats_interval = 5
+# how often worker stats are written (in minutes)
+
+koji_url = "http://ip:port"
+koji_bearer_token = "KOJI_SECRET"
+
+save_logs = false
+debug_log = false
+debug_processor = false
+
+host = "127.0.0.1"
+port = 9002
+# Host and Port used for controller
+
+api_host = "127.0.0.1"
+api_port = 9000
+# Host and Port used for the Flygon API
+
+
+[processors]
+golbat_endpoints = ["http://127.0.0.1:9001"]
+rdm_endpoints = ["token@http://127.0.0.1:9001/raw"]
+# rdm_endpoints can be used for any endpoint that accepts the same raw proto format RDM does.
+# Golbat Endpoints will be used for other means than just raw processing.
+# These are arrays, so if you i.e. don't want any rdm endpoints, just put `rdm_endpoints = []`. You can also use
+# multiple for each.
+
+
+[db]
+host = "0.0.0.0"
+port = 3306
+user = ""
+password = ""
+name = "flygon"
+pool_size = 1
+
