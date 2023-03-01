@@ -35,7 +35,7 @@ func main() {
 	ConnectDatabase(&db)
 
 	gin.SetMode(gin.DebugMode)
-	//gin.SetMode(gin.ReleaseMode)
+	// TODO change to: gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	if config.Config.General.DebugLogging {
 		r.Use(ginlogrus.Logger(log.StandardLogger()))
