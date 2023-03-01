@@ -7,5 +7,5 @@ import (
 var dbDetails DbDetails
 
 type DbDetails struct {
-	GolbatDb *sqlx.DB
+	FlygonDb *sqlx.DB
 }

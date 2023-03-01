@@ -30,7 +30,7 @@ func main() {
 	performDatabaseMigration(config.Config.Db)
 
 	db := db.DbDetails{
-		GolbatDb: connectDb(config.Config.Db),
+		FlygonDb: connectDb(config.Config.Db),
 	}
 	ConnectDatabase(&db)
 

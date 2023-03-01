@@ -15,7 +15,7 @@ func SetupLogger(logLevel log.Level, fileLoggingEnabled bool) {
 
 	lumberjackLogger = &lumberjack.Logger{
 		// Log file absolute path, os agnostic
-		Filename:   filepath.ToSlash("logs/golbat.log"),
+		Filename:   filepath.ToSlash("logs/flygon.log"),
 		MaxSize:    50, // MB
 		MaxBackups: 10,
 		MaxAge:     30,   // days
