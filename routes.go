@@ -1,6 +1,7 @@
 package main
 
 import (
+	InternalController "Flygon/Controller"
 	"Flygon/db"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -9,12 +10,6 @@ import (
 )
 
 var dbDetails *db.DbDetails
-
-type ControlerBody struct {
-	Type     string `json:"type" binding:"required"`
-	Uuid     string `json:"uuid" binding:"required"`
-	Username string `json:"username" binding:"required"`
-}
 
 type RawBody struct {
 	Uuid         string      `json:"uuid" binding:"required"`
@@ -38,7 +33,7 @@ func Raw(c *gin.Context) {
 }
 
 func Controller(c *gin.Context) {
-	var req ControlerBody
+	var req InternalController.ControllerBody
 	host := c.Request.Host
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
@@ -47,4 +42,5 @@ func Controller(c *gin.Context) {
 		return
 	}
 	log.Printf("Got request from %s here into Controller: %+v", host, req)
+	InternalController.Controller(req)
 }
