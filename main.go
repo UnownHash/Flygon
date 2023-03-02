@@ -43,6 +43,7 @@ func main() {
 		r.Use(gin.Recovery())
 	}
 	r.POST("/controler", Controller)
+	r.POST("/raw", Raw)
 	//r.POST("/api/clearQuests", ClearQuests)
 	//r.POST("/api/reloadGeojson", ReloadGeojson)
 	//r.GET("/api/reloadGeojson", ReloadGeojson)
