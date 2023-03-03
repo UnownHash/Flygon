@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"encoding/json"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -43,57 +42,79 @@ func Controller(c *gin.Context, body ControllerBody) {
 }
 
 func handleInit(c *gin.Context, body ControllerBody) {
-	log.Printf("HandleInit")
-	c.JSON(http.StatusAccepted, json.RawMessage{})
+	log.Printf("handleInit")
+	data := make(map[string]any)
+	data["test"] = "test"
+	respondWithData(c, &data)
 	return
 }
 
 func handleHeartbeat(c *gin.Context, body ControllerBody) {
-	log.Printf("HandleHeartbeat")
+	log.Printf("handleHeartbeat")
+	var data map[string]any
+	respondWithData(c, &data)
 	return
 }
 
 func handleGetJob(c *gin.Context, body ControllerBody) {
-	log.Printf("HandleGetJob")
+	log.Printf("handleGetJob")
+	var data map[string]any
+	respondWithData(c, &data)
 	return
 }
 
 func handleGetAccount(c *gin.Context, body ControllerBody) {
-	log.Printf("HandleGetAccount")
+	log.Printf("handleGetAccount")
+	var data map[string]any
+	respondWithData(c, &data)
 	return
 }
 
 func handleTutorialDone(c *gin.Context, body ControllerBody) {
-	log.Printf("HandleTutorialDone")
+	log.Printf("handleTutorialDone")
+	data := make(map[string]any)
+	respondWithData(c, &data)
 	return
 }
 
 func handleAccountBanned(c *gin.Context, body ControllerBody) {
-	log.Printf("HandleTutorialDone")
+	log.Printf("handleAccountBanned")
+	var data map[string]any
+	respondWithData(c, &data)
 	return
 }
 
 func handleAccountSuspended(c *gin.Context, body ControllerBody) {
-	log.Printf("HandleTutorialDone")
+	log.Printf("handleAccountSuspended")
+	var data map[string]any
+	respondWithData(c, &data)
 	return
 }
 
 func handleAccountWarning(c *gin.Context, body ControllerBody) {
-	log.Printf("HandleTutorialDone")
+	log.Printf("handleAccountWarning")
+	var data map[string]any
+	respondWithData(c, &data)
 	return
 }
 
 func handleAccountInvalidCredentials(c *gin.Context, body ControllerBody) {
-	log.Printf("HandleTutorialDone")
+	log.Printf("handleAccountInvalidCredentials")
+	var data map[string]any
+	respondWithData(c, &data)
 	return
 }
 
 func handleAccountUnknownError(c *gin.Context, body ControllerBody) {
-	log.Printf("HandleTutorialDone")
+	log.Printf("handleAccountUnknownError")
+	var data map[string]any
+	respondWithData(c, &data)
 	return
 }
 
 func handleLoggedOut(c *gin.Context, body ControllerBody) {
-	log.Printf("HandleTutorialDone")
+	log.Printf("handleLoggedOut")
+	var data map[string]any
+	respondWithData(c, &data)
 	return
 }
