@@ -23,5 +23,6 @@ func Controller(c *gin.Context) {
 		return
 	}
 	log.Printf("Got request from %s here into routes: %+v", host, req)
-	InternalController.Controller(req)
+	InternalController.Controller(c, req)
+	return
 }
