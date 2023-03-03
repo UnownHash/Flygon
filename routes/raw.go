@@ -1,5 +1,11 @@
 package routes
 
+import (
+	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
+	"io/ioutil"
+)
+
 type RawBody struct {
 	Uuid         string      `json:"uuid" binding:"required"`
 	Username     string      `json:"username" binding:"required"`
@@ -12,6 +18,8 @@ type RawBody struct {
 	GMO          interface{} `json:"gmo"`      // only one of those three is needed
 }
 
-func Raw(body RawBody) (interface{}, error) {
-	return nil, nil
+func Raw(c *gin.Context) {
+	body, _ := ioutil.ReadAll(c.Request.Body)
+	log.Printf("Got here into Raw: %+v", string(body))
+	return
 }

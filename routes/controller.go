@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"Flygon/db"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -12,30 +13,40 @@ type ControllerBody struct {
 	Username string `json:"username" binding:"required"`
 }
 
-func Controller(c *gin.Context, body ControllerBody) {
-	switch body.Type {
+func Controller(c *gin.Context) {
+	var req ControllerBody
+	host := c.Request.Host
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		log.Warnf("POST /controler/ in wrong format!")
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	log.Printf("Got request from %s here into routes: %+v", host, req)
+
+	switch req.Type {
 	case "init":
-		handleInit(c, body)
+		handleInit(c, req)
 	case "heartbeat":
-		handleHeartbeat(c, body)
+		handleHeartbeat(c, req)
 	case "get_job":
-		handleGetJob(c, body)
+		handleGetJob(c, req)
 	case "get_account":
-		handleGetAccount(c, body)
+		handleGetAccount(c, req)
 	case "tutorial_done":
-		handleTutorialDone(c, body)
+		handleTutorialDone(c, req)
 	case "account_banned":
-		handleAccountBanned(c, body)
+		handleAccountBanned(c, req)
 	case "account_suspended":
-		handleAccountSuspended(c, body)
+		handleAccountSuspended(c, req)
 	case "account_warning":
-		handleAccountWarning(c, body)
+		handleAccountWarning(c, req)
 	case "account_invalid_credentials":
-		handleAccountInvalidCredentials(c, body)
+		handleAccountInvalidCredentials(c, req)
 	case "account_unknown_error":
-		handleAccountUnknownError(c, body)
+		handleAccountUnknownError(c, req)
 	case "logged_out":
-		handleLoggedOut(c, body)
+		handleLoggedOut(c, req)
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error"})
 	}
@@ -43,8 +54,35 @@ func Controller(c *gin.Context, body ControllerBody) {
 
 func handleInit(c *gin.Context, body ControllerBody) {
 	log.Printf("handleInit")
-	data := make(map[string]any)
-	data["test"] = "test"
+	device, err := db.GetDevice(*dbDetails, body.Uuid)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+	var assigned = false
+	if device == nil {
+		newDevice := db.Device{
+			Uuid: body.Uuid,
+		}
+		_, err = db.CreateDevice(*dbDetails, newDevice)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+		assigned = false
+	} else {
+		if device.AreaId.Valid {
+			assigned = true
+		} else {
+			assigned = false
+		}
+	}
+	data := map[string]any{
+		"assigned": assigned,
+		"version":  "1",    // TODO VersionManager version
+		"commit":   "hash", // TODO VersionManager commit
+		"provider": "RealDeviceMap",
+	}
 	respondWithData(c, &data)
 	return
 }

@@ -3,15 +3,14 @@ package main
 import (
 	"Flygon/config"
 	"Flygon/db"
+	"Flygon/routes"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/mysql"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jmoiron/sqlx"
 	log "github.com/sirupsen/logrus"
-	ginlogrus "github.com/toorop/gin-logrus"
 	"time"
 )
 
@@ -32,27 +31,9 @@ func main() {
 	dbDetails := db.DbDetails{
 		FlygonDb: connectDb(config.Config.Db),
 	}
-	db.ConnectDatabase(&dbDetails)
+	routes.ConnectDatabase(&dbDetails)
+	routes.StartGin()
 
-	gin.SetMode(gin.DebugMode)
-	// TODO change to: gin.SetMode(gin.ReleaseMode)
-	r := gin.New()
-	if config.Config.General.DebugLogging {
-		r.Use(ginlogrus.Logger(log.StandardLogger()))
-	} else {
-		r.Use(gin.Recovery())
-	}
-	r.POST("/controler", Controller)
-	r.POST("/raw", Raw)
-	//r.POST("/api/clearQuests", ClearQuests)
-	//r.POST("/api/reloadGeojson", ReloadGeojson)
-	//r.GET("/api/reloadGeojson", ReloadGeojson)
-	//r.POST("/api/queryPokemon", QueryPokemon)
-	addr := fmt.Sprintf(":%d", config.Config.General.Port)
-	err := r.Run(addr)
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 func connectDb(dbDetails config.DbDefinition) *sqlx.DB {
