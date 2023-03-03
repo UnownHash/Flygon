@@ -29,10 +29,10 @@ func main() {
 
 	performDatabaseMigration(config.Config.Db)
 
-	db := db.DbDetails{
+	dbDetails := db.DbDetails{
 		FlygonDb: connectDb(config.Config.Db),
 	}
-	ConnectDatabase(&db)
+	db.ConnectDatabase(&dbDetails)
 
 	gin.SetMode(gin.DebugMode)
 	// TODO change to: gin.SetMode(gin.ReleaseMode)

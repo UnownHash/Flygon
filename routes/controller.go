@@ -1,4 +1,4 @@
-package Controller
+package routes
 
 import log "github.com/sirupsen/logrus"
 

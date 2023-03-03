@@ -1,31 +1,12 @@
 package main
 
 import (
-	InternalController "Flygon/Controller"
-	"Flygon/db"
+	InternalController "Flygon/routes"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 )
-
-var dbDetails *db.DbDetails
-
-type RawBody struct {
-	Uuid         string      `json:"uuid" binding:"required"`
-	Username     string      `json:"username" binding:"required"`
-	HaveAr       bool        `json:"have_ar"`
-	TrainerExp   int         `json:"trainerexp" default:"0"`
-	TrainerLevel int         `json:"trainerLevel" default:"0"`
-	TrainerLvl   int         `json:"trainerlvl" default:"0"`
-	Contents     interface{} `json:"contents"` // only one of those three is needed
-	Protos       interface{} `json:"protos"`   // only one of those three is needed
-	GMO          interface{} `json:"gmo"`      // only one of those three is needed
-}
-
-func ConnectDatabase(dbd *db.DbDetails) {
-	dbDetails = dbd
-}
 
 func Raw(c *gin.Context) {
 	body, _ := ioutil.ReadAll(c.Request.Body)
@@ -41,6 +22,6 @@ func Controller(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	log.Printf("Got request from %s here into Controller: %+v", host, req)
+	log.Printf("Got request from %s here into routes: %+v", host, req)
 	InternalController.Controller(req)
 }
