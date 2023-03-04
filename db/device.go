@@ -29,6 +29,16 @@ func GetDevice(db DbDetails, id string) (*Device, error) {
 	return &device[0], nil
 }
 
+func SaveDevice(db DbDetails, device Device) (int64, error) {
+	res, err := db.FlygonDb.Exec("UPDATE device"+
+		"SET area_id = ?, last_host = ?, last_seen = ?, account_username = ?, last_lat = ?, last_lon = ? WHERE uuid = ?",
+		device.AreaId, device.LastHost, device.LastSeen, device.AccountUsername, device.LastLat, device.LastLon, device.Uuid)
+	if err != nil {
+		return -1, err
+	}
+	return res.LastInsertId()
+}
+
 func CreateDevice(db DbDetails, device Device) (int64, error) {
 	res, err := db.FlygonDb.NamedExec(
 		"INSERT INTO device (uuid, area_id, account_username, last_host, last_seen, last_lat, last_lon)"+

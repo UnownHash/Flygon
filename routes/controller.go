@@ -4,6 +4,7 @@ import (
 	"Flygon/db"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/guregu/null.v4"
 	"net/http"
 )
 
@@ -15,7 +16,7 @@ type ControllerBody struct {
 
 func Controller(c *gin.Context) {
 	var req ControllerBody
-	host := c.Request.Host
+	host := c.RemoteIP()
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
 		log.Warnf("POST /controler/ in wrong format!")
@@ -106,7 +107,34 @@ func handleGetJob(c *gin.Context, body ControllerBody) {
 
 func handleGetAccount(c *gin.Context, body ControllerBody) {
 	log.Printf("handleGetAccount")
-	var data map[string]any
+	device, err := db.GetDevice(*dbDetails, body.Uuid)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	} else if device == nil {
+		respondWithError(c, DeviceNotFound)
+		return
+	}
+	var account *db.Account
+	if device.AccountUsername.Valid {
+		// TODO load account from DB and check if it's valid to reuse it
+	}
+	if account == nil {
+		// TODO get new valid account for area
+
+		respondWithError(c, NoAccountLeft)
+		return
+	}
+	// TODO add login limit
+	if body.Username != account.Username {
+		log.Debugf("[CONTROLLER] [%s] New account: %s", body.Uuid, account.Username)
+	}
+	device.AccountUsername = null.StringFrom(account.Username)
+	db.SaveDevice(*dbDetails, *device)
+	data := map[string]any{
+		"username": account.Username,
+		"password": account.Password,
+	}
 	respondWithData(c, &data)
 	return
 }
