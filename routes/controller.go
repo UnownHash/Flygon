@@ -137,11 +137,12 @@ func handleGetAccount(c *gin.Context, body ControllerBody) {
 	}
 	var account *db.Account
 	if device.AccountUsername.Valid {
+		db.GetAccountRecord(*dbDetails, device.AccountUsername.ValueOrZero())
 		// TODO load account from DB and check if it's valid to reuse it
 	}
 	if account == nil {
 		// TODO get new valid account for area
-		account, err = db.GetAccountRecord(*dbDetails)
+		account, err = db.GetValidAccount(*dbDetails)
 		if account == nil {
 			respondWithError(c, NoAccountLeft)
 			return
@@ -167,41 +168,119 @@ func handleGetAccount(c *gin.Context, body ControllerBody) {
 
 func handleTutorialDone(c *gin.Context, body ControllerBody) {
 	log.Printf("handleTutorialDone")
-	data := make(map[string]any)
-	respondWithData(c, &data)
+	device, err := db.GetDevice(*dbDetails, body.Uuid)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	} else if device == nil {
+		respondWithError(c, DeviceNotFound)
+		return
+	}
+	if !device.AccountUsername.Valid {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+	account, err := db.GetAccountRecord(*dbDetails, device.AccountUsername.ValueOrZero())
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	} else if account == nil {
+		respondWithError(c, AccountNotFound)
+		return
+	}
+	if account.Level == 0 {
+		account.Level = 1
+		db.MarkTutorialDone(*dbDetails, account.Username)
+	}
+	respondWithOk(c)
 	return
 }
 
 func handleAccountBanned(c *gin.Context, body ControllerBody) {
 	log.Printf("handleAccountBanned")
-	var data map[string]any
-	respondWithData(c, &data)
+	if len(body.Username) == 0 {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+	account, err := db.GetAccountRecord(*dbDetails, body.Username)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	} else if account == nil {
+		respondWithError(c, AccountNotFound)
+	}
+	db.MarkBanned(*dbDetails, account.Username)
+	respondWithOk(c)
 	return
 }
 
 func handleAccountSuspended(c *gin.Context, body ControllerBody) {
 	log.Printf("handleAccountSuspended")
-	var data map[string]any
-	respondWithData(c, &data)
+	if len(body.Username) == 0 {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+	account, err := db.GetAccountRecord(*dbDetails, body.Username)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	} else if account == nil {
+		respondWithError(c, AccountNotFound)
+	}
+	db.MarkSuspended(*dbDetails, account.Username)
+	respondWithOk(c)
 	return
 }
 
 func handleAccountWarning(c *gin.Context, body ControllerBody) {
 	log.Printf("handleAccountWarning")
-	var data map[string]any
-	respondWithData(c, &data)
+	if len(body.Username) == 0 {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+	account, err := db.GetAccountRecord(*dbDetails, body.Username)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	} else if account == nil {
+		respondWithError(c, AccountNotFound)
+	}
+	//TODO mark account with warning
+	respondWithOk(c)
 	return
 }
 
 func handleAccountInvalidCredentials(c *gin.Context, body ControllerBody) {
 	log.Printf("handleAccountInvalidCredentials")
-	var data map[string]any
-	respondWithData(c, &data)
+	if len(body.Username) == 0 {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+	account, err := db.GetAccountRecord(*dbDetails, body.Username)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	} else if account == nil {
+		respondWithError(c, AccountNotFound)
+	}
+	//TODO mark account with invalid credentials
+	respondWithOk(c)
 	return
 }
 
 func handleAccountUnknownError(c *gin.Context, body ControllerBody) {
 	log.Printf("handleAccountUnknownError")
+	if len(body.Username) == 0 {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+	account, err := db.GetAccountRecord(*dbDetails, body.Username)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	} else if account == nil {
+		respondWithError(c, AccountNotFound)
+	}
 	var data map[string]any
 	respondWithData(c, &data)
 	return
@@ -209,7 +288,20 @@ func handleAccountUnknownError(c *gin.Context, body ControllerBody) {
 
 func handleLoggedOut(c *gin.Context, body ControllerBody) {
 	log.Printf("handleLoggedOut")
-	var data map[string]any
-	respondWithData(c, &data)
+	device, err := db.GetDevice(*dbDetails, body.Uuid)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	} else if device == nil {
+		respondWithError(c, DeviceNotFound)
+		return
+	}
+	device.AccountUsername = null.NewString("", false)
+	_, err = db.SaveDevice(*dbDetails, *device)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+	respondWithOk(c)
 	return
 }

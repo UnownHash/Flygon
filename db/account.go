@@ -39,7 +39,20 @@ func GetAccountRecords(db DbDetails) ([]Account, error) {
 	return accounts, nil
 }
 
-func GetAccountRecord(db DbDetails) (*Account, error) {
+func GetAccountRecord(db DbDetails, uuid string) (*Account, error) {
+	accounts := []Account{}
+	err := db.FlygonDb.Select(&accounts, "SELECT * FROM account WHERE username = ?", uuid)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(accounts) == 0 {
+		return nil, nil
+	}
+	return &accounts[0], nil
+}
+
+func GetValidAccount(db DbDetails) (*Account, error) {
 	accounts := []Account{}
 	err := db.FlygonDb.Select(&accounts, "SELECT * FROM account")
 	// TODO adapt sql query
@@ -70,6 +83,10 @@ func InsertAccount(db DbDetails, username string, password string, level int) (i
 		return 0, err
 	}
 	return res.LastInsertId()
+}
+
+func MarkTutorialDone(db DbDetails, username string) {
+	db.FlygonDb.MustExec("UPDATE account SET Level=1 WHERE Username=?", username)
 }
 
 func MarkBanned(db DbDetails, username string) {
