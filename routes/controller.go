@@ -5,9 +5,11 @@ import (
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/guregu/null.v4"
+	"math/rand"
 	"net/http"
 )
 
+// mitm : atlas sends username only in ban flagging and get_job
 type ControllerBody struct {
 	Type     string `json:"type" binding:"required"`
 	Uuid     string `json:"uuid" binding:"required"`
@@ -113,8 +115,8 @@ func handleGetJob(c *gin.Context, body ControllerBody) {
 	log.Printf("handleGetJob")
 	task := map[string]any{
 		"action":    ScanPokemon,
-		"lat":       47.26478,
-		"lon":       11.40795,
+		"lat":       47.26478 + (rand.Float64() / 100),
+		"lon":       11.407958 + (rand.Float64() / 100),
 		"min_level": 30,
 		"max_level": 40,
 	}
