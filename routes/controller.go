@@ -10,7 +10,7 @@ import (
 type ControllerBody struct {
 	Type     string `json:"type" binding:"required"`
 	Uuid     string `json:"uuid" binding:"required"`
-	Username string `json:"username" binding:"required"`
+	Username string `json:"username"`
 }
 
 func Controller(c *gin.Context) {
@@ -89,8 +89,11 @@ func handleInit(c *gin.Context, body ControllerBody) {
 
 func handleHeartbeat(c *gin.Context, body ControllerBody) {
 	log.Printf("handleHeartbeat")
-	var data map[string]any
-	respondWithData(c, &data)
+	err := db.TouchDevice(*dbDetails, body.Uuid, c.RemoteIP())
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+	}
+	respondWithOk(c)
 	return
 }
 

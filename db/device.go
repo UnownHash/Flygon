@@ -41,3 +41,8 @@ func CreateDevice(db DbDetails, device Device) (int64, error) {
 
 	return res.LastInsertId()
 }
+
+func TouchDevice(db DbDetails, uuid string, host string) error {
+	_, err := db.FlygonDb.Exec("UPDATE device SET last_seen = UNIX_TIMESTAMP(), last_host = ? WHERE uuid = ?", host, uuid)
+	return err
+}

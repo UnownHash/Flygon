@@ -12,3 +12,7 @@ func respondWithData(c *gin.Context, data *map[string]any) {
 	}
 	c.JSON(http.StatusOK, response)
 }
+
+func respondWithOk(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
