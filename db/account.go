@@ -39,6 +39,20 @@ func GetAccountRecords(db DbDetails) ([]Account, error) {
 	return accounts, nil
 }
 
+func GetAccountRecord(db DbDetails) (*Account, error) {
+	accounts := []Account{}
+	err := db.FlygonDb.Select(&accounts, "SELECT * FROM account")
+	// TODO adapt sql query
+	if err != nil {
+		return nil, err
+	}
+
+	if len(accounts) == 0 {
+		return nil, nil
+	}
+	return &accounts[0], nil
+}
+
 func GetAccountsStats(db DbDetails) (*AccountsStats, error) {
 	stats := AccountsStats{}
 	err := db.FlygonDb.Get(&stats, "SELECT COUNT(*) AS total, SUM(banned) AS banned, SUM(suspended) AS suspended, SUM(warn) AS warned FROM account")

@@ -14,6 +14,17 @@ type ControllerBody struct {
 	Username string `json:"username"`
 }
 
+type MitmAction string
+
+const (
+	ScanPokemon   MitmAction = "scan_pokemon"
+	ScanIv        MitmAction = "scan_iv"
+	ScanQuest     MitmAction = "scan_quest"
+	SpinPokestop  MitmAction = "spin_pokestop"
+	ScanRaid      MitmAction = "scan_raid"
+	SwitchAccount MitmAction = "switch_account"
+)
+
 func Controller(c *gin.Context) {
 	var req ControllerBody
 	host := c.RemoteIP()
@@ -100,8 +111,15 @@ func handleHeartbeat(c *gin.Context, body ControllerBody) {
 
 func handleGetJob(c *gin.Context, body ControllerBody) {
 	log.Printf("handleGetJob")
-	var data map[string]any
-	respondWithData(c, &data)
+	task := map[string]any{
+		"action":    ScanPokemon,
+		"lat":       47.26478,
+		"lon":       11.40795,
+		"min_level": 30,
+		"max_level": 40,
+	}
+	log.Infof("[CONTROLLER] [%s] Sending task %s at %f, %f", body.Uuid, task["action"], task["lat"], task["lon"])
+	respondWithData(c, &task)
 	return
 }
 
@@ -121,16 +139,22 @@ func handleGetAccount(c *gin.Context, body ControllerBody) {
 	}
 	if account == nil {
 		// TODO get new valid account for area
-
-		respondWithError(c, NoAccountLeft)
-		return
+		account, err = db.GetAccountRecord(*dbDetails)
+		if account == nil {
+			respondWithError(c, NoAccountLeft)
+			return
+		}
 	}
 	// TODO add login limit
 	if body.Username != account.Username {
 		log.Debugf("[CONTROLLER] [%s] New account: %s", body.Uuid, account.Username)
 	}
 	device.AccountUsername = null.StringFrom(account.Username)
-	db.SaveDevice(*dbDetails, *device)
+	_, err = db.SaveDevice(*dbDetails, *device)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
 	data := map[string]any{
 		"username": account.Username,
 		"password": account.Password,

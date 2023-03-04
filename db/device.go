@@ -30,7 +30,7 @@ func GetDevice(db DbDetails, id string) (*Device, error) {
 }
 
 func SaveDevice(db DbDetails, device Device) (int64, error) {
-	res, err := db.FlygonDb.Exec("UPDATE device"+
+	res, err := db.FlygonDb.Exec("UPDATE device "+
 		"SET area_id = ?, last_host = ?, last_seen = ?, account_username = ?, last_lat = ?, last_lon = ? WHERE uuid = ?",
 		device.AreaId, device.LastHost, device.LastSeen, device.AccountUsername, device.LastLat, device.LastLon, device.Uuid)
 	if err != nil {
