@@ -32,7 +32,7 @@ func Controller(c *gin.Context) {
 	host := c.RemoteIP()
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
-		log.Warnf("POST /controler/ in wrong format!")
+		log.Warnf("POST /controler/ in wrong format! %s", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -73,26 +73,20 @@ func handleInit(c *gin.Context, body ControllerBody) {
 		c.Status(http.StatusInternalServerError)
 		return
 	}
-	var assigned = false
 	if device == nil {
-		newDevice := db.Device{
+		device = &db.Device{
 			Uuid: body.Uuid,
 		}
-		_, err = db.CreateDevice(*dbDetails, newDevice)
+		_, err = db.CreateDevice(*dbDetails, *device)
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
 			return
 		}
-		assigned = false
-	} else {
-		if device.AreaId.Valid {
-			assigned = true
-		} else {
-			assigned = false
-		}
+
 	}
+	//TODO assign area to device
 	data := map[string]any{
-		"assigned": assigned,
+		"assigned": true,
 		"version":  "1",    // TODO VersionManager version
 		"commit":   "hash", // TODO VersionManager commit
 		"provider": "RealDeviceMap",
