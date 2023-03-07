@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"Flygon/accounts"
 	"Flygon/config"
 	"Flygon/db"
 	"fmt"
@@ -10,9 +11,14 @@ import (
 )
 
 var dbDetails *db.DbDetails
+var accountManager *accounts.AccountManager
 
 func ConnectDatabase(dbd *db.DbDetails) {
 	dbDetails = dbd
+}
+
+func LoadAccountManager(am *accounts.AccountManager) {
+	accountManager = am
 }
 
 func StartGin() {

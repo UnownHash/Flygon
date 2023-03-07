@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Flygon/accounts"
 	"Flygon/config"
 	"Flygon/db"
 	"Flygon/routes"
@@ -31,7 +32,15 @@ func main() {
 	dbDetails := db.DbDetails{
 		FlygonDb: connectDb(config.Config.Db),
 	}
+
+	if err := db.MarkAllReleased(dbDetails); err != nil {
+		panic(err)
+	}
+	am := accounts.AccountManager{}
+	am.LoadAccounts(dbDetails)
+
 	routes.ConnectDatabase(&dbDetails)
+	routes.LoadAccountManager(&am)
 	routes.StartGin()
 
 }

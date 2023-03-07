@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"Flygon/accounts"
 	"Flygon/db"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -129,18 +130,10 @@ func handleGetAccount(c *gin.Context, body ControllerBody) {
 		respondWithError(c, DeviceNotFound)
 		return
 	}
-	var account *db.Account
-	if device.AccountUsername.Valid {
-		db.GetAccountRecord(*dbDetails, device.AccountUsername.ValueOrZero())
-		// TODO load account from DB and check if it's valid to reuse it
-	}
+	account := accountManager.GetNextAccount(accounts.SelectLevel30)
 	if account == nil {
-		// TODO get new valid account for area
-		account, err = db.GetValidAccount(*dbDetails)
-		if account == nil {
-			respondWithError(c, NoAccountLeft)
-			return
-		}
+		respondWithError(c, NoAccountLeft)
+		return
 	}
 	// TODO add login limit
 	if body.Username != account.Username {
@@ -174,18 +167,11 @@ func handleTutorialDone(c *gin.Context, body ControllerBody) {
 		c.Status(http.StatusBadRequest)
 		return
 	}
-	account, err := db.GetAccountRecord(*dbDetails, device.AccountUsername.ValueOrZero())
-	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		return
-	} else if account == nil {
+	if !accountManager.AccountExists(device.AccountUsername.ValueOrZero()) {
 		respondWithError(c, AccountNotFound)
 		return
 	}
-	if account.Level == 0 {
-		account.Level = 1
-		db.MarkTutorialDone(*dbDetails, account.Username)
-	}
+	accountManager.MarkTutorialDone(device.AccountUsername.ValueOrZero())
 	respondWithOk(c)
 	return
 }
@@ -196,14 +182,11 @@ func handleAccountBanned(c *gin.Context, body ControllerBody) {
 		c.Status(http.StatusBadRequest)
 		return
 	}
-	account, err := db.GetAccountRecord(*dbDetails, body.Username)
-	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		return
-	} else if account == nil {
+	if !accountManager.AccountExists(body.Username) {
 		respondWithError(c, AccountNotFound)
+		return
 	}
-	db.MarkBanned(*dbDetails, account.Username)
+	accountManager.MarkBanned(body.Username)
 	respondWithOk(c)
 	return
 }
@@ -214,14 +197,11 @@ func handleAccountSuspended(c *gin.Context, body ControllerBody) {
 		c.Status(http.StatusBadRequest)
 		return
 	}
-	account, err := db.GetAccountRecord(*dbDetails, body.Username)
-	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		return
-	} else if account == nil {
+	if !accountManager.AccountExists(body.Username) {
 		respondWithError(c, AccountNotFound)
+		return
 	}
-	db.MarkSuspended(*dbDetails, account.Username)
+	accountManager.MarkSuspended(body.Username)
 	respondWithOk(c)
 	return
 }
@@ -232,14 +212,11 @@ func handleAccountWarning(c *gin.Context, body ControllerBody) {
 		c.Status(http.StatusBadRequest)
 		return
 	}
-	account, err := db.GetAccountRecord(*dbDetails, body.Username)
-	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		return
-	} else if account == nil {
+	if !accountManager.AccountExists(body.Username) {
 		respondWithError(c, AccountNotFound)
+		return
 	}
-	//TODO mark account with warning
+	accountManager.MarkBanned(body.Username)
 	respondWithOk(c)
 	return
 }
@@ -250,13 +227,13 @@ func handleAccountInvalidCredentials(c *gin.Context, body ControllerBody) {
 		c.Status(http.StatusBadRequest)
 		return
 	}
-	account, err := db.GetAccountRecord(*dbDetails, body.Username)
-	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		return
-	} else if account == nil {
-		respondWithError(c, AccountNotFound)
-	}
+	//account, err := db.GetAccountRecord(*dbDetails, body.Username)
+	//if err != nil {
+	//	c.Status(http.StatusInternalServerError)
+	//	return
+	//} else if account == nil {
+	//	respondWithError(c, AccountNotFound)
+	//}
 	//TODO mark account with invalid credentials
 	respondWithOk(c)
 	return
@@ -268,15 +245,12 @@ func handleAccountUnknownError(c *gin.Context, body ControllerBody) {
 		c.Status(http.StatusBadRequest)
 		return
 	}
-	account, err := db.GetAccountRecord(*dbDetails, body.Username)
-	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		return
-	} else if account == nil {
+	if !accountManager.AccountExists(body.Username) {
 		respondWithError(c, AccountNotFound)
+		return
 	}
-	var data map[string]any
-	respondWithData(c, &data)
+	accountManager.MarkDisabled(body.Username)
+	respondWithOk(c)
 	return
 }
 
