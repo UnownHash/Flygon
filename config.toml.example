@@ -20,6 +20,8 @@ api_port = 9000
 
 [processors]
 golbat_endpoint = "http://127.0.0.1:9001"
+golbat_raw_bearer = ""
+golbat_api_secret = ""
 # Golbat Endpoint will be used raw processing.
 
 
