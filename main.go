@@ -5,6 +5,7 @@ import (
 	"Flygon/config"
 	"Flygon/db"
 	"Flygon/routes"
+	"Flygon/worker"
 	"fmt"
 	"github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate/v4"
@@ -41,6 +42,8 @@ func main() {
 
 	routes.ConnectDatabase(&dbDetails)
 	routes.LoadAccountManager(&am)
+	worker.StartAreas(dbDetails, &am)
+	//worker.StartUnbound(dbDetails, &am, authenticationQueue)
 	routes.StartGin()
 
 }
