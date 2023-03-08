@@ -85,7 +85,7 @@ func GetKojiRoute(geofence geo.Geofence, name string) ([]geo.Location, error) {
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(routeBytes))
 
 	if err != nil {
-		log.Warnf("KOJI: Unable to create new request", url, err)
+		log.Warnf("KOJI: Unable to create new request  %s - %s", url, err)
 		return nil, err
 	}
 
