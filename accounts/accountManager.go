@@ -3,6 +3,7 @@ package accounts
 import (
 	"Flygon/db"
 	"Flygon/pogo"
+	"errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/guregu/null.v4"
 	"sync"
@@ -82,7 +83,9 @@ func (a *AccountManager) ReloadAccounts() {
 
 		if !found {
 			log.Infof("Found new account %s", account.Username)
-			account.LastReleased = null.IntFrom(time.Now().Unix()) // Assume account is released and available to use
+			if !account.LastReleased.Valid {
+				account.LastReleased = null.IntFrom(time.Now().Unix()) // Assume account is released and available to use
+			}
 			a.accounts = append(a.accounts, account)
 			a.inUse = append(a.inUse, false)
 			foundRecords = append(foundRecords, true)
@@ -169,6 +172,21 @@ func (a *AccountManager) ReleaseAccount(account AccountDetails) {
 	if err := db.MarkReleased(a.db, account.Username); err != nil {
 		log.Errorf("Error marking account %s as released: %s", account.Username, err)
 	}
+}
+
+// IsValidAccount This should be called on every job request - expensive?
+func (a *AccountManager) IsValidAccount(username string) (bool, error) {
+	for x := range a.accounts {
+		if a.accounts[x].Username == username {
+			time24hrAgo := time.Now().Add(-24 * time.Hour).Unix()
+			timeNow := time.Now().Unix()
+			return a.accounts[x].Suspended ||
+				a.accounts[x].Banned ||
+				int64(a.accounts[x].WarnExpiration) > timeNow ||
+				(a.accounts[x].LastDisabled.Valid && a.accounts[x].LastDisabled.Int64 > time24hrAgo), nil
+		}
+	}
+	return false, errors.New("account not found")
 }
 
 func (a *AccountManager) MarkWarned(username string) {

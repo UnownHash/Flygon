@@ -108,6 +108,17 @@ func handleHeartbeat(c *gin.Context, body ControllerBody) {
 
 func handleGetJob(c *gin.Context, body ControllerBody) {
 	log.Printf("handleGetJob")
+	isValid, err := accountManager.IsValidAccount(body.Username)
+	if err != nil {
+		respondWithError(c, AccountNotFound)
+	}
+	if !isValid {
+		respondWithData(c, &map[string]any{
+			"action":    SwitchAccount,
+			"min_level": 30,
+			"max_level": 40,
+		})
+	}
 	task := map[string]any{
 		"action":    ScanPokemon,
 		"lat":       47.26478 + (rand.Float64() / 100),
