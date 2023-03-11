@@ -186,7 +186,8 @@ func (a *AccountManager) IsValidAccount(username string) (bool, error) {
 				(a.accounts[x].LastDisabled.Valid && a.accounts[x].LastDisabled.Int64 > time24hrAgo), nil
 		}
 	}
-	return false, errors.New("account not found")
+	log.Errorf("Account with username '%s' not found in accounts", username)
+	return false, errors.New("account " + username + " not found")
 }
 
 func (a *AccountManager) MarkWarned(username string) {
