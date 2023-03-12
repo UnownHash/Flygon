@@ -11,6 +11,7 @@ require (
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/pelletier/go-toml/v2 v2.0.6
 	github.com/pkg/errors v0.9.1
+	github.com/puzpuzpuz/xsync v1.5.2
 	github.com/ringsaturn/tzf v0.11.0
 	github.com/ringsaturn/tzf-rel v0.0.2022-g1
 	github.com/sirupsen/logrus v1.9.0

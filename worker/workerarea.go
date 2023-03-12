@@ -1,8 +1,8 @@
 package worker
 
 import (
-	"fmt"
 	"github.com/jellydator/ttlcache/v3"
+	"github.com/puzpuzpuz/xsync"
 	"sync"
 	"time"
 
@@ -25,8 +25,8 @@ type WorkerArea struct {
 	Name              string
 	TargetWorkerCount int
 	route             []geo.Location
-	workers           []*PokemonQuestModeSwitcher
 	pokemonRoute      [][]geo.Location
+	workers           []string
 
 	questFence             geo.Geofence
 	questRoute             []geo.Location
@@ -41,6 +41,13 @@ type WorkerArea struct {
 	pokemonEncounterCache *ttlcache.Cache[encounterCacheKey, bool]
 	pokestopCache         *ttlcache.Cache[string, *PokestopQuestInfo]
 	questCheckHours       []int
+}
+
+type WorkerStatus struct {
+	//Uuid     string
+	area     *WorkerArea
+	lastSeen int64
+	stepNo   int
 }
 
 type PokestopQuestInfo struct {
@@ -60,12 +67,17 @@ const Quest_Layer_NoAr = 1
 var workerAreas map[int]*WorkerArea
 var workerAccessMutex sync.RWMutex
 
+//var workerUuidArea xsync.Map //[string]*WorkerArea
+var workerUuidStatus xsync.Map //map[string]*WorkerStatus
+
 func RegisterArea(area *WorkerArea) {
 	workerAccessMutex.Lock()
 
 	if workerAreas == nil {
 		workerAreas = make(map[int]*WorkerArea)
 	}
+	//workerUuidArea = *xsync.NewMap()
+	workerUuidStatus = *xsync.NewMap()
 
 	workerAreas[area.Id] = area
 	workerAccessMutex.Unlock()
@@ -98,8 +110,8 @@ func NewWorkerArea(id int, name string, workerCount int, route []geo.Location, q
 		TargetWorkerCount:  workerCount,
 		route:              route,
 		accountManager:     accountManager,
-		workers:            make([]*PokemonQuestModeSwitcher, workerCount),
 		pokemonRoute:       make([][]geo.Location, workerCount),
+		workers:            make([]string, workerCount),
 		questFence:         questGeofence,
 		questRoute:         questRoute,
 		questCheckHours:    questCheckHours,
@@ -110,17 +122,17 @@ func NewWorkerArea(id int, name string, workerCount int, route []geo.Location, q
 	return &w
 }
 
-func (p *WorkerArea) GetWorkers() map[string]WorkerMode {
-	r := make(map[string]WorkerMode)
-	for i := 0; i < p.TargetWorkerCount && i < len(p.workers); i++ {
-		worker := p.workers[i]
-		if worker != nil {
-			r[worker.GetWorkerName()] = worker
-		}
-	}
-
-	return r
-}
+//func (p *WorkerArea) GetWorkers() map[string]WorkerMode {
+//	r := make(map[string]WorkerMode)
+//	for i := 0; i < p.TargetWorkerCount && i < len(p.workers); i++ {
+//		worker := p.workers[i]
+//		if worker != nil {
+//			r[worker.GetWorkerName()] = worker
+//		}
+//	}
+//
+//	return r
+//}
 
 // GetPokestopStatus Returns a cell object for given cell id, creates a new one if not seen before
 func (p *WorkerArea) GetPokestopStatus(fortId string) *PokestopQuestInfo {
@@ -156,22 +168,6 @@ func (p *WorkerArea) clearQuestCache() {
 	p.pokestopCache.DeleteAll()
 }
 
-func (p *WorkerArea) Start() {
-	for routeNo := 0; routeNo < p.TargetWorkerCount; routeNo++ {
-		workerName := fmt.Sprintf("%s_%02d", p.Name, routeNo+1)
-
-		//p.targetMode[routeNo] = Mode_PokemonMode
-		workerMode := p.createMode(routeNo, workerName)
-		p.workers[routeNo] = workerMode
-
-		//go p.connectionManager.LaunchWorker(workerMode, workerName, routeNo)
-
-		// Short delay between workers here so as parallel start of areas, all areas will get
-		// a chance to allocate their first worker
-		time.Sleep(5 * time.Second)
-	}
-}
-
 func (p *WorkerArea) StartQuesting() bool {
 	if len(p.questFence.Fence) > 0 {
 		_ = golbatapi.ClearQuests(p.questFence)
@@ -183,11 +179,11 @@ func (p *WorkerArea) StartQuesting() bool {
 	p.clearQuestCache()
 
 	if len(p.questRoute) > 0 {
-		for x := 0; x < p.TargetWorkerCount && x < len(p.workers); x++ {
-			if p.workers[x] != nil {
-				p.workers[x].SwitchToQuestMode()
-			}
-		}
+		//for x := 0; x < p.TargetWorkerCount && x < len(p.workers); x++ {
+		//	if p.workers[x] != nil {
+		//		p.workers[x].SwitchToQuestMode()
+		//	}
+		//}
 		return true
 	}
 
@@ -205,46 +201,16 @@ func (p *WorkerArea) AdjustWorkers(newWorkers int) {
 	if p.TargetWorkerCount == newWorkers {
 		return
 	}
-
-	if p.TargetWorkerCount < newWorkers {
-		for x := cap(p.workers); x < newWorkers; x++ {
-			p.workers = append(p.workers, nil)
-			p.pokemonRoute = append(p.pokemonRoute, []geo.Location{})
-			//			p.targetMode = append(p.targetMode, Mode_PokemonMode)
-		}
-
-		oldTargetWorkers := p.TargetWorkerCount
-		p.TargetWorkerCount = newWorkers
-		for routeNo := oldTargetWorkers; routeNo < p.TargetWorkerCount; routeNo++ {
-			workerName := fmt.Sprintf("%s_%02d", p.Name, routeNo+1)
-			//			p.targetMode[routeNo] = Mode_PokemonMode
-			workerMode := p.createMode(routeNo, workerName)
-			p.workers[routeNo] = workerMode
-			//go p.connectionManager.LaunchWorker(workerMode, workerName, routeNo)
-		}
-		return
-	}
-
-	if p.TargetWorkerCount > newWorkers {
-		for x := newWorkers; x < p.TargetWorkerCount; x++ {
-			if p.workers[x] != nil {
-				//p.connectionManager.StopWorker(x)
-				p.workers[x].Stop()
-				p.workers[x] = nil
-			}
-		}
-
-		p.TargetWorkerCount = newWorkers
-		// walker will realise it is out of bounds and quit by itself, but we can recalc
-		// other workers
-		p.recalculatePokemonRoutes()
-	}
+	p.TargetWorkerCount = newWorkers
+	p.recalculatePokemonRoutes()
 }
 
 func (p *WorkerArea) ActiveWorkerCount() int {
 	currentWorkers := 0
+	now := time.Now().Unix()
 	for n := 0; n < p.TargetWorkerCount && n < len(p.workers); n++ {
-		if p.workers[n] != nil {
+		workerStatus, ok := workerUuidStatus.Load(p.workers[n])
+		if ok && workerStatus.(WorkerStatus).lastSeen > now-900 {
 			currentWorkers++
 		}
 	}
@@ -254,15 +220,6 @@ func (p *WorkerArea) ActiveWorkerCount() int {
 
 func (p *WorkerArea) RouteLength() int {
 	return len(p.route)
-}
-
-func (p *WorkerArea) createMode(workerNo int, workerName string) *PokemonQuestModeSwitcher {
-	var mode *PokemonQuestModeSwitcher
-
-	mode = NewPokemonQuestModeSwitcher()
-	mode.Initialise(workerNo, workerName, p)
-
-	return mode
 }
 
 func (p *WorkerArea) calculateQuestRoute() {
@@ -297,9 +254,9 @@ func (p *WorkerArea) recalculatePokemonRoutes() {
 
 	currentWorkers := 0
 	for x := 0; x < p.TargetWorkerCount; x++ {
-		if x < len(p.workers) && p.workers[x] != nil && p.workers[x].GetMode() == Mode_PokemonMode && p.workers[x].IsExecuting() {
-			currentWorkers++
-		}
+		//if x < len(p.workers) && p.workers[x] != nil && p.workers[x].GetMode() == Mode_PokemonMode && p.workers[x].IsExecuting() {
+		//	currentWorkers++
+		//}
 	}
 
 	if currentWorkers > 0 {
@@ -307,7 +264,7 @@ func (p *WorkerArea) recalculatePokemonRoutes() {
 		count := 0
 
 		for n := 0; n < p.TargetWorkerCount; n++ {
-			if n < len(p.workers) && p.workers[n] != nil && p.workers[n].GetMode() == Mode_PokemonMode && p.workers[n].IsExecuting() {
+			if n < len(p.workers) {
 				p.pokemonRoute[n] = splitRoute[count]
 				count++
 			}
@@ -321,11 +278,6 @@ func (p *WorkerArea) recalculatePokemonRoutes() {
 
 func (p *WorkerArea) AdjustQuestRoute(route []geo.Location) {
 	p.questRoute = route
-	for n := 0; n < p.TargetWorkerCount && n < len(p.workers); n++ {
-		if p.workers[n] != nil {
-			p.workers[n].Reload()
-		}
-	}
 }
 
 func (p *WorkerArea) AdjustQuestCheckHours(hours []int) {

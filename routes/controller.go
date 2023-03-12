@@ -3,6 +3,7 @@ package routes
 import (
 	"Flygon/accounts"
 	"Flygon/db"
+	"Flygon/worker"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/guregu/null.v4"
@@ -69,30 +70,15 @@ func Controller(c *gin.Context) {
 
 func handleInit(c *gin.Context, body ControllerBody) {
 	log.Printf("handleInit")
-	device, err := db.GetDevice(*dbDetails, body.Uuid)
-	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		return
-	}
-	if device == nil {
-		device = &db.Device{
-			Uuid: body.Uuid,
-		}
-		_, err = db.CreateDevice(*dbDetails, *device)
-		if err != nil {
-			c.Status(http.StatusInternalServerError)
-			return
-		}
+	worker.AssignNewWorker(body.Uuid)
 
-	}
 	//TODO assign area to device
-	data := map[string]any{
+	respondWithData(c, &map[string]any{
 		"assigned": true,
-		"version":  "1",    // TODO VersionManager version
-		"commit":   "hash", // TODO VersionManager commit
-		"provider": "RealDeviceMap",
-	}
-	respondWithData(c, &data)
+		"version":  "1",      // TODO VersionManager version
+		"commit":   "hash",   // TODO VersionManager commit
+		"provider": "Flygon", //instead of RealDeviceMap
+	})
 	return
 }
 

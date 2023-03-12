@@ -57,7 +57,7 @@ func StartAreas(dbDetails db.DbDetails, am *accounts.AccountManager) {
 		workerArea := NewWorkerArea(area.Id, areaName, noWorkers, areaRoute, geo.Geofence{Fence: geofenceLocations}, questRoute, questCheckHours, am)
 		RegisterArea(workerArea)
 
-		go workerArea.Start()
+		//go workerArea.Start()
 	}
 
 	if config.Config.General.KojiUrl != "" {
@@ -147,7 +147,7 @@ func ReloadAreas(dbDetails db.DbDetails) {
 			workerArea := NewWorkerArea(area.Id, areaName, noWorkers, areaRoute, geo.Geofence{Fence: geofenceLocations}, questRoute, questCheckHours, accountsManager)
 			RegisterArea(workerArea)
 
-			go workerArea.Start()
+			//go workerArea.Start()
 		}
 	}
 
