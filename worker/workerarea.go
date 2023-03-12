@@ -122,6 +122,10 @@ func NewWorkerArea(id int, name string, workerCount int, route []geo.Location, q
 	return &w
 }
 
+func AssignNewWorker(uuid string) {
+	//TODO assign evenly to an area, so each area is started equally distributed
+}
+
 //func (p *WorkerArea) GetWorkers() map[string]WorkerMode {
 //	r := make(map[string]WorkerMode)
 //	for i := 0; i < p.TargetWorkerCount && i < len(p.workers); i++ {
