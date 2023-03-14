@@ -43,6 +43,7 @@ func main() {
 	routes.ConnectDatabase(&dbDetails)
 	routes.LoadAccountManager(&am)
 	worker.StartAreas(dbDetails, &am)
+	worker.InitWorkerState()
 	//worker.StartUnbound(dbDetails, &am, authenticationQueue)
 	routes.StartGin()
 

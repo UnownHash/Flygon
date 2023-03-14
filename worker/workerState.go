@@ -13,7 +13,7 @@ type WorkerState struct {
 var state map[string]*WorkerState
 var stateMutex sync.Mutex
 
-func initWorkerState() {
+func InitWorkerState() {
 	state = make(map[string]*WorkerState)
 }
 
@@ -30,7 +30,16 @@ func GetWorkerState(workerId string) *WorkerState {
 	}
 }
 
-func cleanWorkerState() {
+func RemoveWorkerState(workerId string) {
+	stateMutex.Lock()
+	defer stateMutex.Unlock()
+
+	if _, ok := state[workerId]; ok {
+		delete(state, workerId)
+	}
+}
+
+func CleanWorkerState() {
 	stateMutex.Lock()
 	defer stateMutex.Unlock()
 

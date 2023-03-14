@@ -6,7 +6,6 @@ import (
 	"Flygon/worker"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/guregu/null.v4"
 	"math/rand"
 	"net/http"
 )
@@ -111,6 +110,7 @@ func handleGetAccount(c *gin.Context, body ControllerBody, workerState *worker.W
 	a, err := workerState.GetAllocatedArea()
 	if err != nil {
 		respondWithError(c, InstanceNotFound)
+		return
 	}
 	a.RecalculateRouteParts()
 	data := map[string]any{
@@ -148,23 +148,11 @@ func handleGetJob(c *gin.Context, body ControllerBody, workerState *worker.Worke
 
 func handleTutorialDone(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
 	log.Printf("handleTutorialDone")
-	device, err := db.GetDevice(*dbDetails, body.Uuid)
-	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		return
-	} else if device == nil {
-		respondWithError(c, DeviceNotFound)
-		return
-	}
-	if !device.AccountUsername.Valid {
-		c.Status(http.StatusBadRequest)
-		return
-	}
-	if !accountManager.AccountExists(device.AccountUsername.ValueOrZero()) {
+	if !accountManager.AccountExists(body.Username) {
 		respondWithError(c, AccountNotFound)
 		return
 	}
-	accountManager.MarkTutorialDone(device.AccountUsername.ValueOrZero())
+	accountManager.MarkTutorialDone(body.Username)
 	respondWithOk(c)
 	return
 }
@@ -249,20 +237,7 @@ func handleAccountUnknownError(c *gin.Context, body ControllerBody, workerState 
 
 func handleLoggedOut(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
 	log.Printf("handleLoggedOut")
-	device, err := db.GetDevice(*dbDetails, body.Uuid)
-	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		return
-	} else if device == nil {
-		respondWithError(c, DeviceNotFound)
-		return
-	}
-	device.AccountUsername = null.NewString("", false)
-	_, err = db.SaveDevice(*dbDetails, *device)
-	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		return
-	}
+	worker.RemoveWorkerState(body.Username)
 	respondWithOk(c)
 	return
 }
