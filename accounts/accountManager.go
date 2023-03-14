@@ -83,9 +83,6 @@ func (a *AccountManager) ReloadAccounts() {
 
 		if !found {
 			log.Infof("Found new account %s", account.Username)
-			if !account.LastReleased.Valid {
-				account.LastReleased = null.IntFrom(time.Now().Unix()) // Assume account is released and available to use
-			}
 			a.accounts = append(a.accounts, account)
 			a.inUse = append(a.inUse, false)
 			foundRecords = append(foundRecords, true)
