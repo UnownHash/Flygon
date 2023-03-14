@@ -1,8 +1,8 @@
 package worker
 
 import (
+	"errors"
 	"github.com/jellydator/ttlcache/v3"
-	"github.com/puzpuzpuz/xsync"
 	"sync"
 	"time"
 
@@ -26,7 +26,7 @@ type WorkerArea struct {
 	TargetWorkerCount int
 	route             []geo.Location
 	pokemonRoute      [][]geo.Location
-	workers           []string
+	workers           int
 
 	questFence             geo.Geofence
 	questRoute             []geo.Location
@@ -43,13 +43,6 @@ type WorkerArea struct {
 	questCheckHours       []int
 }
 
-type WorkerStatus struct {
-	//Uuid     string
-	area     *WorkerArea
-	lastSeen int64
-	stepNo   int
-}
-
 type PokestopQuestInfo struct {
 	ScanData         [2]PokestopScanInfo
 	HasArQuestReward bool
@@ -64,11 +57,11 @@ type PokestopScanInfo struct {
 const Quest_Layer_AR = 0
 const Quest_Layer_NoAr = 1
 
+var ErrNoAreaNeedsWorkers = errors.New("No area needs workers")
+var ErrNoAreaAllocated = errors.New("No area allocated to worker")
+
 var workerAreas map[int]*WorkerArea
 var workerAccessMutex sync.RWMutex
-
-//var workerUuidArea xsync.Map //[string]*WorkerArea
-var workerUuidStatus xsync.Map //map[string]*WorkerStatus
 
 func RegisterArea(area *WorkerArea) {
 	workerAccessMutex.Lock()
@@ -76,8 +69,6 @@ func RegisterArea(area *WorkerArea) {
 	if workerAreas == nil {
 		workerAreas = make(map[int]*WorkerArea)
 	}
-	//workerUuidArea = *xsync.NewMap()
-	workerUuidStatus = *xsync.NewMap()
 
 	workerAreas[area.Id] = area
 	workerAccessMutex.Unlock()
@@ -111,7 +102,7 @@ func NewWorkerArea(id int, name string, workerCount int, route []geo.Location, q
 		route:              route,
 		accountManager:     accountManager,
 		pokemonRoute:       make([][]geo.Location, workerCount),
-		workers:            make([]string, workerCount),
+		workers:            0,
 		questFence:         questGeofence,
 		questRoute:         questRoute,
 		questCheckHours:    questCheckHours,
@@ -122,8 +113,66 @@ func NewWorkerArea(id int, name string, workerCount int, route []geo.Location, q
 	return &w
 }
 
-func AssignNewWorker(uuid string) {
-	//TODO assign evenly to an area, so each area is started equally distributed
+func (ws *WorkerState) GetAllocatedArea() (*WorkerArea, error) {
+	workerAccessMutex.Lock()
+	defer workerAccessMutex.Unlock()
+
+	if wa, found := workerAreas[ws.AreaId]; !found {
+		return nil, ErrNoAreaAllocated
+	} else {
+		return wa, nil
+	}
+}
+
+func (ws *WorkerState) AllocateArea() (*WorkerArea, error) {
+	// Find area with the least workers
+	// Add worker to area
+	// Set state
+
+	workerAccessMutex.Lock()
+	defer workerAccessMutex.Unlock()
+	// Find area with the least workers that needs workers
+	var leastWorkersArea *WorkerArea
+	leastWorkersInArea := 0
+
+	for i := 0; i < len(workerAreas); i++ {
+		a := workerAreas[i]
+		totalWorkerInArea := CountWorkersWithArea(a.Id)
+		if totalWorkerInArea >= a.workers {
+			continue
+		}
+
+		if leastWorkersArea == nil || totalWorkerInArea < leastWorkersInArea {
+			leastWorkersArea = a
+			leastWorkersInArea = totalWorkerInArea
+		}
+	}
+
+	if leastWorkersArea == nil {
+		return nil, ErrNoAreaNeedsWorkers
+	}
+
+	ws.AreaId = leastWorkersArea.Id
+	return leastWorkersArea, nil
+}
+
+func (p *WorkerArea) RecalculateRouteParts() {
+	workersInArea := GetWorkersWithArea(p.Id)
+
+	workers := len(workersInArea)
+	// split route into parts
+	// this is not right because the workers are not stable (they could come in a different order).
+	// perhaps they should now be sorted by a login time
+	for i := 0; i < workers; i++ {
+		ws := workersInArea[i]
+		// this is not quite the right code but is an example
+		ws.StartStep = i * len(p.pokemonRoute) / workers
+		ws.EndStep = (i+1)*len(p.pokemonRoute)/workers - 1
+
+		if ws.Step < ws.StartStep || ws.Step > ws.EndStep {
+			ws.Step = ws.StartStep
+		}
+	}
 }
 
 //func (p *WorkerArea) GetWorkers() map[string]WorkerMode {
@@ -211,14 +260,9 @@ func (p *WorkerArea) AdjustWorkers(newWorkers int) {
 
 func (p *WorkerArea) ActiveWorkerCount() int {
 	currentWorkers := 0
-	now := time.Now().Unix()
-	for n := 0; n < p.TargetWorkerCount && n < len(p.workers); n++ {
-		workerStatus, ok := workerUuidStatus.Load(p.workers[n])
-		if ok && workerStatus.(WorkerStatus).lastSeen > now-900 {
-			currentWorkers++
-		}
+	for n := 0; n < p.TargetWorkerCount && n < p.workers; n++ {
+		currentWorkers++
 	}
-
 	return currentWorkers
 }
 
@@ -268,7 +312,7 @@ func (p *WorkerArea) recalculatePokemonRoutes() {
 		count := 0
 
 		for n := 0; n < p.TargetWorkerCount; n++ {
-			if n < len(p.workers) {
+			if n < p.workers {
 				p.pokemonRoute[n] = splitRoute[count]
 				count++
 			}

@@ -39,42 +39,46 @@ func Controller(c *gin.Context) {
 		return
 	}
 	log.Printf("Got request from %s here into routes: %+v", host, req)
-
+	ws := worker.GetWorkerState(req.Uuid)
 	switch req.Type {
 	case "init":
-		handleInit(c, req)
+		handleInit(c, req, ws)
 	case "heartbeat":
-		handleHeartbeat(c, req)
+		handleHeartbeat(c, req, ws)
 	case "get_job":
-		handleGetJob(c, req)
+		handleGetJob(c, req, ws)
 	case "get_account":
-		handleGetAccount(c, req)
+		handleGetAccount(c, req, ws)
 	case "tutorial_done":
-		handleTutorialDone(c, req)
+		handleTutorialDone(c, req, ws)
 	case "account_banned":
-		handleAccountBanned(c, req)
+		handleAccountBanned(c, req, ws)
 	case "account_suspended":
-		handleAccountSuspended(c, req)
+		handleAccountSuspended(c, req, ws)
 	case "account_warning":
-		handleAccountWarning(c, req)
+		handleAccountWarning(c, req, ws)
 	case "account_invalid_credentials":
-		handleAccountInvalidCredentials(c, req)
+		handleAccountInvalidCredentials(c, req, ws)
 	case "account_unknown_error":
-		handleAccountUnknownError(c, req)
+		handleAccountUnknownError(c, req, ws)
 	case "logged_out":
-		handleLoggedOut(c, req)
+		handleLoggedOut(c, req, ws)
 	default:
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error"})
 	}
 }
 
-func handleInit(c *gin.Context, body ControllerBody) {
+func handleInit(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
 	log.Printf("handleInit")
-	worker.AssignNewWorker(body.Uuid)
-
-	//TODO assign area to device
+	assigned := false
+	if a, err := workerState.AllocateArea(); err != nil {
+		log.Errorf("Error happened on allocating area %s", err.Error())
+	} else {
+		log.Infof("Allocated area %d:%s to worker %s", workerState.AreaId, a.Name, body.Uuid)
+		assigned = true
+	}
 	respondWithData(c, &map[string]any{
-		"assigned": true,
+		"assigned": assigned,
 		"version":  "1",      // TODO VersionManager version
 		"commit":   "hash",   // TODO VersionManager commit
 		"provider": "Flygon", //instead of RealDeviceMap
@@ -82,7 +86,7 @@ func handleInit(c *gin.Context, body ControllerBody) {
 	return
 }
 
-func handleHeartbeat(c *gin.Context, body ControllerBody) {
+func handleHeartbeat(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
 	log.Printf("handleHeartbeat")
 	err := db.TouchDevice(*dbDetails, body.Uuid, c.RemoteIP())
 	if err != nil {
@@ -92,7 +96,32 @@ func handleHeartbeat(c *gin.Context, body ControllerBody) {
 	return
 }
 
-func handleGetJob(c *gin.Context, body ControllerBody) {
+func handleGetAccount(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
+	log.Printf("handleGetAccount")
+	account := accountManager.GetNextAccount(accounts.SelectLevel30)
+	if account == nil {
+		respondWithError(c, NoAccountLeft)
+		return
+	}
+	// TODO add login limit
+	if workerState.Username != account.Username {
+		log.Debugf("[CONTROLLER] [%s] New account: %s", body.Uuid, account.Username)
+	}
+	workerState.Username = account.Username
+	a, err := workerState.GetAllocatedArea()
+	if err != nil {
+		respondWithError(c, InstanceNotFound)
+	}
+	a.RecalculateRouteParts()
+	data := map[string]any{
+		"username": account.Username,
+		"password": account.Password,
+	}
+	respondWithData(c, &data)
+	return
+}
+
+func handleGetJob(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
 	log.Printf("handleGetJob")
 	isValid, err := accountManager.IsValidAccount(body.Username)
 	if err != nil {
@@ -117,40 +146,7 @@ func handleGetJob(c *gin.Context, body ControllerBody) {
 	return
 }
 
-func handleGetAccount(c *gin.Context, body ControllerBody) {
-	log.Printf("handleGetAccount")
-	device, err := db.GetDevice(*dbDetails, body.Uuid)
-	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		return
-	} else if device == nil {
-		respondWithError(c, DeviceNotFound)
-		return
-	}
-	account := accountManager.GetNextAccount(accounts.SelectLevel30)
-	if account == nil {
-		respondWithError(c, NoAccountLeft)
-		return
-	}
-	// TODO add login limit
-	if body.Username != account.Username {
-		log.Debugf("[CONTROLLER] [%s] New account: %s", body.Uuid, account.Username)
-	}
-	device.AccountUsername = null.StringFrom(account.Username)
-	_, err = db.SaveDevice(*dbDetails, *device)
-	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		return
-	}
-	data := map[string]any{
-		"username": account.Username,
-		"password": account.Password,
-	}
-	respondWithData(c, &data)
-	return
-}
-
-func handleTutorialDone(c *gin.Context, body ControllerBody) {
+func handleTutorialDone(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
 	log.Printf("handleTutorialDone")
 	device, err := db.GetDevice(*dbDetails, body.Uuid)
 	if err != nil {
@@ -173,7 +169,7 @@ func handleTutorialDone(c *gin.Context, body ControllerBody) {
 	return
 }
 
-func handleAccountBanned(c *gin.Context, body ControllerBody) {
+func handleAccountBanned(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
 	log.Printf("handleAccountBanned")
 	if len(body.Username) == 0 {
 		c.Status(http.StatusBadRequest)
@@ -188,7 +184,7 @@ func handleAccountBanned(c *gin.Context, body ControllerBody) {
 	return
 }
 
-func handleAccountSuspended(c *gin.Context, body ControllerBody) {
+func handleAccountSuspended(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
 	log.Printf("handleAccountSuspended")
 	if len(body.Username) == 0 {
 		c.Status(http.StatusBadRequest)
@@ -203,7 +199,7 @@ func handleAccountSuspended(c *gin.Context, body ControllerBody) {
 	return
 }
 
-func handleAccountWarning(c *gin.Context, body ControllerBody) {
+func handleAccountWarning(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
 	log.Printf("handleAccountWarning")
 	if len(body.Username) == 0 {
 		c.Status(http.StatusBadRequest)
@@ -218,7 +214,7 @@ func handleAccountWarning(c *gin.Context, body ControllerBody) {
 	return
 }
 
-func handleAccountInvalidCredentials(c *gin.Context, body ControllerBody) {
+func handleAccountInvalidCredentials(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
 	log.Printf("handleAccountInvalidCredentials")
 	if len(body.Username) == 0 {
 		c.Status(http.StatusBadRequest)
@@ -236,7 +232,7 @@ func handleAccountInvalidCredentials(c *gin.Context, body ControllerBody) {
 	return
 }
 
-func handleAccountUnknownError(c *gin.Context, body ControllerBody) {
+func handleAccountUnknownError(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
 	log.Printf("handleAccountUnknownError")
 	if len(body.Username) == 0 {
 		c.Status(http.StatusBadRequest)
@@ -251,7 +247,7 @@ func handleAccountUnknownError(c *gin.Context, body ControllerBody) {
 	return
 }
 
-func handleLoggedOut(c *gin.Context, body ControllerBody) {
+func handleLoggedOut(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
 	log.Printf("handleLoggedOut")
 	device, err := db.GetDevice(*dbDetails, body.Uuid)
 	if err != nil {
