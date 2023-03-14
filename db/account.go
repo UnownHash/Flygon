@@ -56,7 +56,7 @@ func GetAccountsStats(db DbDetails) (*AccountsStats, error) {
 }
 
 func InsertAccount(db DbDetails, username string, password string, level int) (int64, error) {
-	res, err := db.FlygonDb.Exec("INSERT INTO account (username, password, level) VALUES (?, ?, ?)", username, password, level)
+	res, err := db.FlygonDb.Exec("INSERT INTO account (username, password, level, last_released) VALUES (?, ?, ?, UNIX_TIMESTAMP())", username, password, level)
 	if err != nil {
 		return 0, err
 	}
