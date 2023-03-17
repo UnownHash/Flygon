@@ -1,6 +1,9 @@
 package worker
 
-import "sync"
+import (
+	"sync"
+	"time"
+)
 
 type WorkerState struct {
 	AreaId    int
@@ -8,6 +11,7 @@ type WorkerState struct {
 	StartStep int
 	EndStep   int
 	Step      int
+	LastSeen  int64
 }
 
 var state map[string]*WorkerState
@@ -23,11 +27,16 @@ func GetWorkerState(workerId string) *WorkerState {
 
 	if s, found := state[workerId]; !found {
 		newState := &WorkerState{}
+		newState.LastSeen = time.Now().Unix()
 		state[workerId] = newState
 		return newState
 	} else {
 		return s
 	}
+}
+
+func (ws *WorkerState) ResetUsername() {
+	ws.Username = ""
 }
 
 func RemoveWorkerState(workerId string) {
@@ -56,7 +65,7 @@ func CountWorkersWithArea(areaId int) int {
 
 	count := 0
 	for _, v := range state {
-		if v.AreaId == areaId {
+		if v.AreaId == areaId && len(v.Username) > 0 {
 			count++
 		}
 	}
@@ -71,7 +80,9 @@ func GetWorkersWithArea(areaId int) []*WorkerState {
 	workers := make([]*WorkerState, 0)
 	for _, v := range state {
 		if v.AreaId == areaId {
-			workers = append(workers, v)
+			if len(v.Username) > 0 { // only respect worker states with assigned username
+				workers = append(workers, v)
+			}
 		}
 	}
 

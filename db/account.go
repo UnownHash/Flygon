@@ -13,13 +13,14 @@ type Account struct {
 	Warn           bool     `db:"warn"`
 	WarnExpiration int      `db:"warn_expiration"`
 	Suspended      bool     `db:"suspended"`
+	LastSuspended  null.Int `db:"last_suspended"`
 	Banned         bool     `db:"banned"`
-	LastSelected   null.Int `db:"last_selected"`
-	LastReleased   null.Int `db:"last_released"`
+	LastBanned     null.Int `db:"last_banned"`
 	Disabled       bool     `db:"disabled"`
 	LastDisabled   null.Int `db:"last_disabled"`
-	LastBanned     null.Int `db:"last_banned"`
-	LastSuspended  null.Int `db:"last_suspended"`
+	Invalid        bool     `db:"invalid"`
+	LastSelected   null.Int `db:"last_selected"`
+	LastReleased   null.Int `db:"last_released"`
 }
 
 type AccountsStats struct {
@@ -46,7 +47,7 @@ func GetAccountRecords(db DbDetails) ([]Account, error) {
 
 func GetAccountsStats(db DbDetails) (*AccountsStats, error) {
 	stats := AccountsStats{}
-	err := db.FlygonDb.Get(&stats, "SELECT COUNT(*) AS total, SUM(banned) AS banned, SUM(suspended) AS suspended, SUM(warn) AS warned FROM account")
+	err := db.FlygonDb.Get(&stats, "SELECT COUNT(*) AS total, SUM(banned) AS banned, SUM(suspended) AS suspended, SUM(warn) AS warned, SUM(CASE WHEN last_disabled > UNIX_TIMESTAMP()-86400 THEN 1 ELSE 0 END) AS disabled FROM account")
 
 	if err != nil {
 		return nil, err
@@ -85,6 +86,12 @@ func MarkSuspended(db DbDetails, username string) error {
 
 func MarkWarned(db DbDetails, username string) error {
 	_, err := db.FlygonDb.Exec("UPDATE account SET Warn=1, warn_expiration=UNIX_TIMESTAMP() + 7*24*60*60  WHERE Username=?", username)
+	return err
+
+}
+
+func MarkInvalid(db DbDetails, username string) error {
+	_, err := db.FlygonDb.Exec("UPDATE account SET Invalid=1 WHERE Username=?", username)
 	return err
 
 }

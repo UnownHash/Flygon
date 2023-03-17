@@ -25,7 +25,7 @@ type WorkerArea struct {
 	Name              string
 	TargetWorkerCount int
 	route             []geo.Location
-	pokemonRoute      [][]geo.Location
+	pokemonRoute      []geo.Location
 	workers           int
 
 	questFence             geo.Geofence
@@ -94,6 +94,14 @@ func GetWorkerAreas() (results []*WorkerArea) {
 	return results
 }
 
+func GetWorkerArea(areaId int) *WorkerArea {
+	if a, ok := workerAreas[areaId]; ok {
+		return a
+	}
+	log.Errorf("Area with id %d not found", areaId)
+	return nil
+}
+
 func NewWorkerArea(id int, name string, workerCount int, route []geo.Location, questGeofence geo.Geofence, questRoute []geo.Location, questCheckHours []int, accountManager *accounts.AccountManager) *WorkerArea {
 	w := WorkerArea{
 		Id:                 id,
@@ -101,8 +109,8 @@ func NewWorkerArea(id int, name string, workerCount int, route []geo.Location, q
 		TargetWorkerCount:  workerCount,
 		route:              route,
 		accountManager:     accountManager,
-		pokemonRoute:       make([][]geo.Location, workerCount),
-		workers:            0,
+		pokemonRoute:       route,
+		workers:            workerCount,
 		questFence:         questGeofence,
 		questRoute:         questRoute,
 		questCheckHours:    questCheckHours,
@@ -173,6 +181,10 @@ func (p *WorkerArea) RecalculateRouteParts() {
 			ws.Step = ws.StartStep
 		}
 	}
+}
+
+func (p *WorkerArea) GetRouteLocationOfStep(stepNo int) geo.Location {
+	return p.route[stepNo]
 }
 
 //func (p *WorkerArea) GetWorkers() map[string]WorkerMode {
@@ -246,7 +258,7 @@ func (p *WorkerArea) StartQuesting() bool {
 // AdjustRoute allows a hot reload of the route
 func (p *WorkerArea) AdjustRoute(newRoute []geo.Location) {
 	p.route = newRoute
-	p.recalculatePokemonRoutes()
+	//TODO recalculate route
 }
 
 // AdjustWorkers allows a hot recalculation of worker numbers
@@ -255,7 +267,7 @@ func (p *WorkerArea) AdjustWorkers(newWorkers int) {
 		return
 	}
 	p.TargetWorkerCount = newWorkers
-	p.recalculatePokemonRoutes()
+	//TODO recalculate workers
 }
 
 func (p *WorkerArea) ActiveWorkerCount() int {
@@ -295,33 +307,6 @@ func (p *WorkerArea) calculateKojiQuestRoute() {
 	// else {
 	// 	p.calculateInternalQuestRoute()
 	// }
-}
-
-func (p *WorkerArea) recalculatePokemonRoutes() {
-	p.routeCalcMutex.Lock()
-
-	currentWorkers := 0
-	for x := 0; x < p.TargetWorkerCount; x++ {
-		//if x < len(p.workers) && p.workers[x] != nil && p.workers[x].GetMode() == Mode_PokemonMode && p.workers[x].IsExecuting() {
-		//	currentWorkers++
-		//}
-	}
-
-	if currentWorkers > 0 {
-		splitRoute := geo.SplitRoute(p.route, currentWorkers)
-		count := 0
-
-		for n := 0; n < p.TargetWorkerCount; n++ {
-			if n < p.workers {
-				p.pokemonRoute[n] = splitRoute[count]
-				count++
-			}
-		}
-	}
-
-	p.routeCalcTime = time.Now()
-
-	p.routeCalcMutex.Unlock()
 }
 
 func (p *WorkerArea) AdjustQuestRoute(route []geo.Location) {

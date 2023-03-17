@@ -177,10 +177,10 @@ func (a *AccountManager) IsValidAccount(username string) (bool, error) {
 		if a.accounts[x].Username == username {
 			time24hrAgo := time.Now().Add(-24 * time.Hour).Unix()
 			timeNow := time.Now().Unix()
-			return a.accounts[x].Suspended ||
+			return !(a.accounts[x].Suspended ||
 				a.accounts[x].Banned ||
 				int64(a.accounts[x].WarnExpiration) > timeNow ||
-				(a.accounts[x].LastDisabled.Valid && a.accounts[x].LastDisabled.Int64 > time24hrAgo), nil
+				(a.accounts[x].LastDisabled.Valid && a.accounts[x].LastDisabled.Int64 > time24hrAgo)), nil
 		}
 	}
 	log.Errorf("Account with username '%s' not found in accounts", username)
@@ -232,6 +232,17 @@ func (a *AccountManager) MarkDisabled(username string) {
 	}
 	if err := db.MarkDisabled(a.db, username); err != nil {
 		log.Errorf("Error marking account %s as disabled: %s", username, err)
+	}
+}
+
+func (a *AccountManager) MarkInvalid(username string) {
+	for x := range a.accounts {
+		if a.accounts[x].Username == username {
+			a.accounts[x].Invalid = true
+		}
+	}
+	if err := db.MarkInvalid(a.db, username); err != nil {
+		log.Errorf("Error marking account %s as invalid: %s", username, err)
 	}
 }
 

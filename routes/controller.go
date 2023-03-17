@@ -2,12 +2,11 @@ package routes
 
 import (
 	"Flygon/accounts"
-	"Flygon/db"
 	"Flygon/worker"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
-	"math/rand"
 	"net/http"
+	"time"
 )
 
 // mitm : atlas sends username only in ban flagging and get_job
@@ -27,6 +26,24 @@ const (
 	ScanRaid      MitmAction = "scan_raid"
 	SwitchAccount MitmAction = "switch_account"
 )
+
+func (a MitmAction) String() string {
+	switch a {
+	case ScanPokemon:
+		return "scan_pokemon"
+	case ScanIv:
+		return "scan_iv"
+	case ScanQuest:
+		return "scan_quest"
+	case SpinPokestop:
+		return "spin_pokestop"
+	case ScanRaid:
+		return "scan_raid"
+	case SwitchAccount:
+		return "switch_account"
+	}
+	return "unknown"
+}
 
 func Controller(c *gin.Context) {
 	var req ControllerBody
@@ -80,17 +97,14 @@ func handleInit(c *gin.Context, body ControllerBody, workerState *worker.WorkerS
 		"assigned": assigned,
 		"version":  Version,
 		"commit":   Commit,
-		"provider": "Flygon", //instead of RealDeviceMap
+		"provider": "Flygon",
 	})
 	return
 }
 
 func handleHeartbeat(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
 	log.Printf("handleHeartbeat")
-	err := db.TouchDevice(*dbDetails, body.Uuid, c.RemoteIP())
-	if err != nil {
-		c.Status(http.StatusInternalServerError)
-	}
+	workerState.LastSeen = time.Now().Unix()
 	respondWithOk(c)
 	return
 }
@@ -103,9 +117,6 @@ func handleGetAccount(c *gin.Context, body ControllerBody, workerState *worker.W
 		return
 	}
 	// TODO add login limit
-	if workerState.Username != account.Username {
-		log.Debugf("[CONTROLLER] [%s] New account: %s", body.Uuid, account.Username)
-	}
 	workerState.Username = account.Username
 	a, err := workerState.GetAllocatedArea()
 	if err != nil {
@@ -128,16 +139,29 @@ func handleGetJob(c *gin.Context, body ControllerBody, workerState *worker.Worke
 		respondWithError(c, AccountNotFound)
 	}
 	if !isValid {
+		workerState.ResetUsername()
 		respondWithData(c, &map[string]any{
-			"action":    SwitchAccount,
+			"action":    SwitchAccount.String(),
 			"min_level": 30,
 			"max_level": 40,
 		})
+		return
 	}
+	workerState.Step++
+	if workerState.Step > workerState.EndStep {
+		log.Infof("Worker finished route")
+		workerState.Step = workerState.StartStep
+	}
+	wa := worker.GetWorkerArea(workerState.AreaId)
+	if wa == nil {
+		respondWithError(c, InstanceNotFound)
+		return
+	}
+	location := wa.GetRouteLocationOfStep(workerState.Step)
 	task := map[string]any{
-		"action":    ScanPokemon,
-		"lat":       47.26478 + (rand.Float64() / 100),
-		"lon":       11.407958 + (rand.Float64() / 100),
+		"action":    ScanPokemon.String(),
+		"lat":       location.Latitude,
+		"lon":       location.Longitude,
 		"min_level": 30,
 		"max_level": 40,
 	}
@@ -167,6 +191,7 @@ func handleAccountBanned(c *gin.Context, body ControllerBody, workerState *worke
 		respondWithError(c, AccountNotFound)
 		return
 	}
+	workerState.ResetUsername()
 	accountManager.MarkBanned(body.Username)
 	respondWithOk(c)
 	return
@@ -182,6 +207,7 @@ func handleAccountSuspended(c *gin.Context, body ControllerBody, workerState *wo
 		respondWithError(c, AccountNotFound)
 		return
 	}
+	workerState.ResetUsername()
 	accountManager.MarkSuspended(body.Username)
 	respondWithOk(c)
 	return
@@ -197,6 +223,7 @@ func handleAccountWarning(c *gin.Context, body ControllerBody, workerState *work
 		respondWithError(c, AccountNotFound)
 		return
 	}
+	workerState.ResetUsername()
 	accountManager.MarkBanned(body.Username)
 	respondWithOk(c)
 	return
@@ -208,14 +235,12 @@ func handleAccountInvalidCredentials(c *gin.Context, body ControllerBody, worker
 		c.Status(http.StatusBadRequest)
 		return
 	}
-	//account, err := db.GetAccountRecord(*dbDetails, body.Username)
-	//if err != nil {
-	//	c.Status(http.StatusInternalServerError)
-	//	return
-	//} else if account == nil {
-	//	respondWithError(c, AccountNotFound)
-	//}
-	//TODO mark account with invalid credentials
+	if !accountManager.AccountExists(body.Username) {
+		respondWithError(c, AccountNotFound)
+		return
+	}
+	workerState.ResetUsername()
+	accountManager.MarkInvalid(body.Username)
 	respondWithOk(c)
 	return
 }

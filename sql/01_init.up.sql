@@ -7,6 +7,7 @@ CREATE TABLE `account`
     `warn_expiration` int(11) unsigned DEFAULT 0,
     `suspended`       tinyint(1) unsigned DEFAULT 0,
     `banned`          tinyint(1) unsigned DEFAULT 0,
+    `disabled`        tinyint(1) unsigned DEFAULT 0,
     `last_selected`   int(11) DEFAULT NULL,
     `last_released`   int(11) DEFAULT NULL,
     PRIMARY KEY (`username`)
