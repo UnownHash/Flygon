@@ -27,6 +27,8 @@ func main() {
 	SetupLogger(logLevel, config.Config.General.SaveLogs)
 
 	log.Info("Starting Flygon")
+	log.Infof("Version %s", routes.Version)
+	log.Infof("Commit %s", routes.Commit)
 
 	performDatabaseMigration(config.Config.Db)
 
