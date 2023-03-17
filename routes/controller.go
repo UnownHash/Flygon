@@ -78,8 +78,8 @@ func handleInit(c *gin.Context, body ControllerBody, workerState *worker.WorkerS
 	}
 	respondWithData(c, &map[string]any{
 		"assigned": assigned,
-		"version":  "1",      // TODO VersionManager version
-		"commit":   Commit,   // TODO VersionManager commit
+		"version":  Version,
+		"commit":   Commit,
 		"provider": "Flygon", //instead of RealDeviceMap
 	})
 	return
