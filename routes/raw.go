@@ -1,12 +1,22 @@
 package routes
 
 import (
+	"bytes"
+	"crypto/tls"
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
+	"net"
 	"net/http"
+	"time"
 )
 
-type RawBody struct {
+type RawEndpoint struct {
+	Url         string
+	BearerToken string
+}
+
+type rawBody struct {
 	Uuid       string `json:"uuid" binding:"required"`
 	Username   string `json:"username" binding:"required"`
 	TrainerExp int    `json:"trainerexp" default:"0"`
@@ -20,16 +30,71 @@ type RawBody struct {
 	HaveAr     *bool         `json:"have_ar"`
 }
 
+var rawEndpoints []RawEndpoint
+
+// rawSendingClient Send raws to golbat, or other data parser
+var rawSendingClient = http.Client{
+	Timeout: 15 * time.Second,
+	Transport: &http.Transport{
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		MaxIdleConns:        1000,
+		MaxIdleConnsPerHost: 1000,
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	},
+}
+
 func Raw(c *gin.Context) {
-	var res RawBody
+	var res rawBody
 	err := c.ShouldBindJSON(&res)
 	if err != nil {
 		log.Warnf("POST /raw/ in wrong format! %s", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	for _, endpoint := range rawEndpoints {
+		password := endpoint.BearerToken
+		destinationUrl := endpoint.Url
+		rawSender(destinationUrl, password, res)
+	}
 	//body, _ := ioutil.ReadAll(c.Request.Body)
 	//log.Printf("Got here into Raw: %+v", res)
 	log.Printf("RAW: UUID: %s - USERNAME: %s - LVL: %d - EXP: %d - HAVE-AR: %b - AT: %f,%f- CONTENTS#: %d", res.Uuid, res.Username, res.TrainerLvl, res.TrainerExp, res.HaveAr, res.LatTarget, res.LonTarget, len(res.Contents))
 	return
+}
+
+func SetRawEndpoints(endpoints []RawEndpoint) {
+	rawEndpoints = endpoints
+}
+
+func rawSender(url string, password string, data rawBody) {
+	b, err2 := json.Marshal(&data)
+	if err2 != nil {
+		return
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(b))
+
+	if err != nil {
+		log.Warnf("Sender: unable to connect to %s - %s", url, err)
+		return
+	}
+
+	req.Header.Set("X-Sender", "FlyGOn")
+	if password != "" {
+		req.Header.Set("Authorization", "Bearer "+password)
+	}
+
+	resp, err := rawSendingClient.Do(req)
+	if err != nil {
+		log.Warningf("Webhook: %s", err)
+		return
+	}
+	_ = resp.Body.Close()
+
+	log.Debugf("Webhook: Response %s", resp.Status)
 }

@@ -11,11 +11,11 @@ debug_processor = false
 
 host = "127.0.0.1"
 port = 9002
-# Host and Port used for controller
-
-api_host = "127.0.0.1"
-api_port = 9000
-# Host and Port used for the Flygon API
+apiSecret = ""
+bearerToken = ""
+# Host and Port
+# apiSecret protects api routes
+# bearerToken protects device routes
 
 
 [processors]

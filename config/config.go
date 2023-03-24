@@ -10,10 +10,10 @@ type generalDefinition struct {
 	WorkerStatsInterval int    `toml:"worker_stats_interval"`
 	SaveLogs            bool   `toml:"save_logs"`
 	DebugLogging        bool   `toml:"debug_log"`
-	Port                int    `toml:"port"`
 	Host                string `toml:"host"`
-	ApiPort             int    `toml:"api_port"`
-	ApiHost             string `toml:"api_host"`
+	Port                int    `toml:"port"`
+	ApiSecret           string `tom:"api_secret"`
+	BearerToken         string `tom:"bearer_token"`
 	LoginDelay          int    `toml:"login_delay"`
 	RouteCalcUrl        string `toml:"routecalc_url"`
 	KojiUrl             string `toml:"koji_url"`
@@ -22,8 +22,10 @@ type generalDefinition struct {
 }
 
 type processorDefinition struct {
-	GolbatEndpoints []string `toml:"golbat_endpoints"`
-	RdmEndpoints    []string `toml:"rdm_endpoints"`
+	GolbatEndpoint  string   `toml:"golbat_endpoint"`
+	GolbatRawBearer string   `toml:"golbat_raw_bearer"`
+	GolbatApiSecret string   `toml:"golbat_api_secret"`
+	RawEndpoints    []string `toml:"raw_endpoints"`
 }
 
 type DbDefinition struct {

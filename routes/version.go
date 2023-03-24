@@ -19,7 +19,7 @@ var Commit = func() string {
 
 var Version = func() string {
 	if info, err := os.Open("VERSION"); err == nil {
-		bytes := make([]byte, 5)
+		bytes := make([]byte, 10)
 		_, err = info.Read(bytes)
 		if err != nil {
 			return "undefined"
