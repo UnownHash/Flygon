@@ -26,23 +26,27 @@ func StartGin() {
 	gin.SetMode(gin.DebugMode)
 	// TODO change to: gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
+	//r.SetTrustedProxies(nil)
 	r.Use(ginlogrus.Logger(log.StandardLogger()), gin.Recovery())
 	r.Use(CORSMiddleware())
 
 	protectedDevice := r.Group("/")
 	protectedDevice.Use(BearerTokenMiddleware())
-	protectedDevice.POST("/controler", Controller)
-	protectedDevice.POST("/raw", Raw)
+	protectedDevice.POST("controler", Controller)
+	protectedDevice.POST("raw", Raw)
+	protectedDevice.GET("status", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"version": Version, "commit": Commit})
+	})
 
 	protectedApi := r.Group("/api")
 	protectedApi.Use(ApiTokenMiddleware())
-	protectedApi.POST("test", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	protectedApi.GET("status", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"version": Version, "commit": Commit})
 	})
-	//protected.POST("/api/clearQuests", ClearQuests)
-	//protected.POST("/api/reloadGeojson", ReloadGeojson)
-	//protected.GET("/api/reloadGeojson", ReloadGeojson)
-	//protected.POST("/api/queryPokemon", QueryPokemon)
+	//protected.POST("/clear-quests", ClearQuests)
+	//protected.POST("/reload-geojson", ReloadGeojson)
+	//protected.GET("/reload-geojson", ReloadGeojson)
+	//protected.POST("/query-pokemon", QueryPokemon)
 
 	addr := fmt.Sprintf(":%d", config.Config.General.Port)
 	err := r.Run(addr)

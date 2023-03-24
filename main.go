@@ -29,7 +29,7 @@ func main() {
 	}
 	util.SetupLogger(logLevel, config.Config.General.SaveLogs)
 
-	log.Info("Starting Flygon")
+	log.Info("Starting FlyGOn")
 	log.Infof("Version %s", routes.Version)
 	log.Infof("Commit %s", routes.Commit)
 

@@ -261,6 +261,10 @@ func (p *WorkerArea) AdjustRoute(newRoute []geo.Location) {
 	//TODO recalculate route
 }
 
+func (p *WorkerArea) AdjustQuestFence(newQuestFence geo.Geofence) {
+	p.questFence = newQuestFence
+}
+
 // AdjustWorkers allows a hot recalculation of worker numbers
 func (p *WorkerArea) AdjustWorkers(newWorkers int) {
 	if p.TargetWorkerCount == newWorkers {

@@ -86,11 +86,17 @@ func ReloadAreas(dbDetails db.DbDetails) {
 
 	for _, area := range areas {
 		areaRoute, err := db.ParseRouteFromString(area.PokemonModeRoute.ValueOrZero())
-		geofenceLocations, err := db.ParseRouteFromString(area.Geofence.ValueOrZero())
 
 		if err != nil {
 			log.Errorf("Route in area %d:%s is malformatted - will continue as this is hot reload", area.Id, area.Name)
 			areaRoute = []geo.Location{}
+		}
+
+		geofenceLocations, err := db.ParseRouteFromString(area.Geofence.ValueOrZero())
+
+		if err != nil {
+			log.Errorf("Geofence in area %d:%s is malformatted - will continue as this is hot reload", area.Id, area.Name)
+			geofenceLocations = []geo.Location{}
 		}
 
 		questRoute, err := db.ParseRouteFromString(area.QuestModeRoute.ValueOrZero())
@@ -113,6 +119,11 @@ func ReloadAreas(dbDetails db.DbDetails) {
 				if current.Name != area.Name {
 					log.Infof("RELOAD: Area %d name change %s->%s [will not be reflected in runtime]", current.Id, current.Name, area.Name)
 					//current.Rename(area.Name)
+				}
+
+				if !slices.Equal(geofenceLocations, current.questFence.Points()) {
+					log.Infof("RELOAD: Area %d / %s quest fence change", current.Id, current.Name)
+					current.AdjustQuestFence(geo.Geofence{Fence: geofenceLocations})
 				}
 
 				if !slices.Equal(areaRoute, current.route) {

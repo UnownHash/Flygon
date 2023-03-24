@@ -97,7 +97,7 @@ func handleInit(c *gin.Context, body ControllerBody, workerState *worker.WorkerS
 		"assigned": assigned,
 		"version":  Version,
 		"commit":   Commit,
-		"provider": "Flygon",
+		"provider": "FlyGOn",
 	})
 	return
 }
