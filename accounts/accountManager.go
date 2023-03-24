@@ -15,15 +15,6 @@ type AccountDetails struct {
 	Password string
 }
 
-type AccountProvider interface {
-	GetNextAccount(testAccount func(a db.Account) bool) *AccountDetails
-	ReleaseAccount(account AccountDetails)
-	MarkSuspended(username string)
-	MarkBanned(username string)
-	MarkDisabled(username string)
-	UpdateDetailsFromGame(username string, fromGame pogo.GetPlayerOutProto)
-}
-
 type AccountManager struct {
 	//	accountNo   int
 	accounts    []db.Account
@@ -116,6 +107,7 @@ func (a *AccountManager) GetNextAccount(testAccount func(a db.Account) bool) *Ac
 		if a.inUse[x] ||
 			account.Suspended ||
 			account.Banned ||
+			account.Invalid ||
 			int64(account.WarnExpiration) > timeNow ||
 			(account.LastDisabled.Valid && account.LastDisabled.Int64 > time24hrAgo) {
 			continue

@@ -26,8 +26,26 @@ type Account struct {
 type AccountsStats struct {
 	Total     uint32 `db:"total" json:"total"`
 	Banned    uint32 `db:"banned" json:"banned"`
+	Invalid   uint32 `db:"invalid" json:"invalid"`
 	Suspended uint32 `db:"suspended" json:"suspended"`
 	Warned    uint32 `db:"warned" json:"warned"`
+	Disabled  uint32 `db:"disabled" json:"disabled"`
+}
+
+type LevelStats struct {
+	Level     int `db:"level" json:"level"`
+	Count     int `db:"count" json:"count"`
+	Warn      int `db:"warn" json:"warn"`
+	Suspended int `db:"suspended" json:"suspended"`
+	Banned    int `db:"banned" json:"banned"`
+	Invalid   int `db:"invalid" json:"invalid"`
+	Disabled  int `db:"disabled" json:"disabled"`
+}
+
+type NewAccountRow struct {
+	Username string `db:"username"`
+	Password string `db:"password"`
+	Level    int    `db:"level"`
 }
 
 func GetAccountRecords(db DbDetails) ([]Account, error) {
@@ -47,7 +65,7 @@ func GetAccountRecords(db DbDetails) ([]Account, error) {
 
 func GetAccountsStats(db DbDetails) (*AccountsStats, error) {
 	stats := AccountsStats{}
-	err := db.FlygonDb.Get(&stats, "SELECT COUNT(*) AS total, SUM(banned) AS banned, SUM(suspended) AS suspended, SUM(warn) AS warned, SUM(CASE WHEN last_disabled > UNIX_TIMESTAMP()-86400 THEN 1 ELSE 0 END) AS disabled FROM account")
+	err := db.FlygonDb.Get(&stats, "SELECT COUNT(*) AS total, SUM(banned) AS banned, SUM(invalid) AS invalid, SUM(suspended) AS suspended, SUM(warn) AS warned, SUM(CASE WHEN last_disabled > UNIX_TIMESTAMP()-86400 THEN 1 ELSE 0 END) AS disabled FROM account")
 
 	if err != nil {
 		return nil, err
@@ -56,12 +74,44 @@ func GetAccountsStats(db DbDetails) (*AccountsStats, error) {
 	return &stats, nil
 }
 
-func InsertAccount(db DbDetails, username string, password string, level int) (int64, error) {
-	res, err := db.FlygonDb.Exec("INSERT INTO account (username, password, level, last_released) VALUES (?, ?, ?, UNIX_TIMESTAMP())", username, password, level)
+func GetLevelStats(db DbDetails) ([]LevelStats, error) {
+	stats := []LevelStats{}
+	err := db.FlygonDb.Select(&stats, "SELECT "+
+		"level, "+
+		"COUNT(IF(UNIX_TIMESTAMP() < warn_expiration, 1, NULL)) AS warn, "+
+		"COUNT(IF(suspended = 1, 1, NULL)) AS suspended, "+
+		"COUNT(IF(banned = 1, 1, NULL)) AS banned, "+
+		"COUNT(IF(invalid = 1, 1, NULL)) AS invalid, "+
+		"COUNT(IF(UNIX_TIMESTAMP() - 86400 < last_disabled, 1, NULL)) AS disabled, "+
+		"COUNT(*) AS count "+
+		"FROM account GROUP BY level ORDER BY level ASC",
+	)
+	if err != nil {
+		return nil, err
+	}
+	return stats, nil
+}
+
+// InsertAccount handles single account addition and returns row ID when new row is created
+func InsertAccount(db DbDetails, account NewAccountRow) (int64, error) {
+	res, err := db.FlygonDb.Exec("INSERT INTO account (username, password, level, last_released) VALUES (?, ?, ?, UNIX_TIMESTAMP())",
+		account.Username, account.Password, account.Level)
 	if err != nil {
 		return 0, err
 	}
 	return res.LastInsertId()
+}
+
+// InsertBulkAccounts handles addition of multiple accounts and returns total number of unique inserted rows
+func InsertBulkAccounts(db DbDetails, accounts []NewAccountRow) (int64, error) {
+	res, err := db.FlygonDb.NamedExec(
+		`INSERT IGNORE INTO account (username, password, level, last_released)
+        VALUES (:username, :password, :level, UNIX_TIMESTAMP())
+    `, accounts)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
 }
 
 func MarkTutorialDone(db DbDetails, username string) error {
