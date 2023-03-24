@@ -48,7 +48,7 @@ func StartGin() {
 	//protected.GET("/reload-geojson", ReloadGeojson)
 	//protected.POST("/query-pokemon", QueryPokemon)
 
-	addr := fmt.Sprintf(":%d", config.Config.General.Port)
+	addr := fmt.Sprintf("%s:%d", config.Config.General.Host, config.Config.General.Port)
 	err := r.Run(addr)
 	if err != nil {
 		log.Fatal(err)
