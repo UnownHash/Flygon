@@ -41,6 +41,7 @@ type DbDefinition struct {
 
 type sentry struct {
 	DSN              string  `toml:"dsn"`
+	Debug            bool    `toml:"debug"`
 	SampleRate       float64 `toml:"sample_rate"`
 	EnableTracing    bool    `toml:"enable_tracing"`
 	TracesSampleRate float64 `toml:"traces_sample_rate"`
@@ -62,5 +63,14 @@ var Config = configDefinition{
 		Host:                "0.0.0.0",
 		Port:                9002,
 		LoginDelay:          20,
+	},
+	Sentry: sentry{
+		SampleRate:       1.0,
+		TracesSampleRate: 1.0,
+	},
+	Pyroscope: pyroscope{
+		ApplicationName:      "flygon",
+		MutexProfileFraction: 5,
+		BlockProfileRate:     5,
 	},
 }
