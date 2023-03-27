@@ -12,7 +12,7 @@ func InitSentry() {
 
 		err := sentry.Init(sentry.ClientOptions{
 			Dsn:              config.Config.Sentry.DSN,
-			Debug:            false,
+			Debug:            config.Config.Sentry.Debug,
 			EnableTracing:    config.Config.Sentry.EnableTracing,
 			TracesSampleRate: config.Config.Sentry.TracesSampleRate,
 			SampleRate:       config.Config.Sentry.SampleRate,
