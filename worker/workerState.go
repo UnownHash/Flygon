@@ -2,6 +2,7 @@ package worker
 
 import (
 	"sync"
+	"time"
 )
 
 type WorkerState struct {
@@ -86,4 +87,8 @@ func GetWorkersWithArea(areaId int) []*WorkerState {
 
 func (ws *WorkerState) ResetUsername() {
 	ws.Username = ""
+}
+
+func (ws *WorkerState) UpdateLastSeen() {
+	ws.LastSeen = time.Now().Unix()
 }
