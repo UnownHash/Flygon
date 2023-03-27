@@ -16,7 +16,6 @@ type AccountDetails struct {
 }
 
 type AccountManager struct {
-	//	accountNo   int
 	accounts    []db.Account
 	inUse       []bool
 	db          db.DbDetails
@@ -150,16 +149,19 @@ func (a *AccountManager) GetNextAccount(testAccount func(a db.Account) bool) *Ac
 	}
 }
 
-func (a *AccountManager) ReleaseAccount(account AccountDetails) {
+func (a *AccountManager) ReleaseAccount(username string) {
+	a.accountLock.Lock()
+	defer a.accountLock.Unlock()
+
 	for x := range a.accounts {
-		if a.accounts[x].Username == account.Username {
+		if a.accounts[x].Username == username {
 			a.inUse[x] = false
 			a.accounts[x].LastReleased = null.IntFrom(time.Now().Unix())
 		}
 	}
 
-	if err := db.MarkReleased(a.db, account.Username); err != nil {
-		log.Errorf("Error marking account %s as released: %s", account.Username, err)
+	if err := db.MarkReleased(a.db, username); err != nil {
+		log.Errorf("Error marking account %s as released: %s", username, err)
 	}
 }
 
@@ -180,6 +182,9 @@ func (a *AccountManager) IsValidAccount(username string) (bool, error) {
 }
 
 func (a *AccountManager) MarkWarned(username string) {
+	a.accountLock.Lock()
+	defer a.accountLock.Unlock()
+
 	for x := range a.accounts {
 		if a.accounts[x].Username == username {
 			a.accounts[x].Warn = true
@@ -193,6 +198,9 @@ func (a *AccountManager) MarkWarned(username string) {
 }
 
 func (a *AccountManager) MarkSuspended(username string) {
+	a.accountLock.Lock()
+	defer a.accountLock.Unlock()
+
 	for x := range a.accounts {
 		if a.accounts[x].Username == username {
 			a.accounts[x].Suspended = true
@@ -205,6 +213,9 @@ func (a *AccountManager) MarkSuspended(username string) {
 }
 
 func (a *AccountManager) MarkBanned(username string) {
+	a.accountLock.Lock()
+	defer a.accountLock.Unlock()
+
 	for x := range a.accounts {
 		if a.accounts[x].Username == username {
 			a.accounts[x].Banned = true
@@ -216,6 +227,9 @@ func (a *AccountManager) MarkBanned(username string) {
 }
 
 func (a *AccountManager) MarkDisabled(username string) {
+	a.accountLock.Lock()
+	defer a.accountLock.Unlock()
+
 	for x := range a.accounts {
 		if a.accounts[x].Username == username {
 			a.accounts[x].Disabled = true
@@ -228,6 +242,9 @@ func (a *AccountManager) MarkDisabled(username string) {
 }
 
 func (a *AccountManager) MarkInvalid(username string) {
+	a.accountLock.Lock()
+	defer a.accountLock.Unlock()
+
 	for x := range a.accounts {
 		if a.accounts[x].Username == username {
 			a.accounts[x].Invalid = true
@@ -239,16 +256,19 @@ func (a *AccountManager) MarkInvalid(username string) {
 }
 
 func (a *AccountManager) MarkTutorialDone(username string) {
+	a.accountLock.Lock()
+	defer a.accountLock.Unlock()
+
 	for x := range a.accounts {
 		if a.accounts[x].Username == username {
 			level := a.accounts[x].Level
 			if level == 0 {
 				a.accounts[x].Level = 1
+				if err := db.MarkTutorialDone(a.db, username); err != nil {
+					log.Errorf("Error marking account %s as tutorial done: %s", username, err)
+				}
 			}
 		}
-	}
-	if err := db.MarkTutorialDone(a.db, username); err != nil {
-		log.Errorf("Error marking account %s as tutorial done: %s", username, err)
 	}
 }
 
@@ -261,7 +281,27 @@ func (a *AccountManager) AccountExists(username string) bool {
 	return false
 }
 
-func (a *AccountManager) UpdateDetailsFromGame(username string, fromGame pogo.GetPlayerOutProto, trainerlevel int) {
+func (a *AccountManager) SetLevel(username string, level int) {
+	a.accountLock.Lock()
+	defer a.accountLock.Unlock()
+	for x := range a.accounts {
+		if a.accounts[x].Username == username {
+			oldLevel := a.accounts[x].Level
+			if oldLevel != level {
+				a.accounts[x].Level = level
+				if err := db.SetLevel(a.db, username, level); err != nil {
+					log.Errorf("Error setting level to %d for account %s: %s", level, username, err)
+					a.accounts[x].Level = oldLevel
+				}
+			}
+		}
+	}
+}
+
+func (a *AccountManager) UpdateDetailsFromGame(username string, fromGame *pogo.GetPlayerOutProto, trainerlevel int) {
+	a.accountLock.Lock()
+	defer a.accountLock.Unlock()
+
 	for x := range a.accounts {
 		if a.accounts[x].Username == username {
 			dbRecord := a.accounts[x]

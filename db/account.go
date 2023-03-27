@@ -164,7 +164,13 @@ func MarkAllReleased(db DbDetails) error {
 
 }
 
-func UpdateDetailsFromGame(db DbDetails, username string, fromGame pogo.GetPlayerOutProto, trainerlevel int) {
+func SetLevel(db DbDetails, username string, level int) error {
+	_, err := db.FlygonDb.Exec("UPDATE account SET level = ? WHERE Username=?", level, username)
+	return err
+
+}
+
+func UpdateDetailsFromGame(db DbDetails, username string, fromGame *pogo.GetPlayerOutProto, trainerlevel int) {
 	db.FlygonDb.Exec("UPDATE account "+
 		"SET suspended=?, "+
 		"warn = ?, "+

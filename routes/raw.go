@@ -1,12 +1,15 @@
 package routes
 
 import (
+	"Flygon/pogo"
 	"Flygon/worker"
 	"bytes"
 	"crypto/tls"
+	b64 "encoding/base64"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/proto"
 	"net"
 	"net/http"
 	"time"
@@ -18,20 +21,23 @@ type RawEndpoint struct {
 }
 
 type rawBody struct {
-	Uuid       string        `json:"uuid" binding:"required"`
-	Username   string        `json:"username" binding:"required"`
-	TrainerExp int           `json:"trainerexp" default:"0"`
-	TrainerLvl int           `json:"trainerlvl" default:"0"`
-	LatTarget  float64       `json:"lat_target"`
-	LonTarget  float64       `json:"lon_target"`
-	Contents   []interface{} `json:"contents" binding:"required"` // only one of those three is needed
-	Protos     interface{}   `json:"protos"`                      // only one of those three is needed
-	GMO        interface{}   `json:"gmo"`                         // only one of those three is needed
-	HaveAr     *bool         `json:"have_ar"`
+	Uuid       string      `json:"uuid" binding:"required"`
+	Username   string      `json:"username" binding:"required"`
+	TrainerExp int         `json:"trainerexp" default:"0"`
+	TrainerLvl int         `json:"trainerlvl" default:"0"`
+	LatTarget  float64     `json:"lat_target"`
+	LonTarget  float64     `json:"lon_target"`
+	Contents   []content   `json:"contents" binding:"required"` // only one of those three is needed
+	Protos     interface{} `json:"protos"`                      // only one of those three is needed
+	GMO        interface{} `json:"gmo"`                         // only one of those three is needed
+	HaveAr     *bool       `json:"have_ar"`
 	// TrainerLevel int         `json:"trainerLevel" default:"0"`
 }
 
-var rawEndpoints []RawEndpoint
+type content struct {
+	Data   string `json:"data"`
+	Method int    `json:"method"`
+}
 
 // rawSendingClient Send raws to golbat, or other data parser
 var rawSendingClient = http.Client{
@@ -49,6 +55,8 @@ var rawSendingClient = http.Client{
 	},
 }
 
+var rawEndpoints []RawEndpoint
+
 func Raw(c *gin.Context) {
 	var res rawBody
 	err := c.ShouldBindJSON(&res)
@@ -57,16 +65,27 @@ func Raw(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	host := c.RemoteIP()
 	ws := worker.GetWorkerState(res.Uuid)
-	ws.UpdateLastSeen()
+	ws.Touch(host)
+	if res.TrainerLvl > 0 {
+		accountManager.SetLevel(res.Username, res.TrainerLvl)
+	}
+	// no need to remove Encounter if trainerlvl below 30
+	// -> Golbat is already filtering that data
 	for _, endpoint := range rawEndpoints {
 		password := endpoint.BearerToken
 		destinationUrl := endpoint.Url
 		go rawSender(destinationUrl, password, c, res)
 	}
 	//body, _ := ioutil.ReadAll(c.Request.Body)
-	//log.Printf("Got here into Raw: %+v", res)
-	log.Printf("RAW: UUID: %s - USERNAME: %s - LVL: %d - EXP: %d - HAVE-AR: %b - AT: %f,%f- CONTENTS#: %d", res.Uuid, res.Username, res.TrainerLvl, res.TrainerExp, res.HaveAr, res.LatTarget, res.LonTarget, len(res.Contents))
+	//log.Printf("RAW: UUID: %s - USERNAME: %s - LVL: %d - EXP: %d - HAVE-AR: %b - AT: %f,%f- CONTENTS#: %d", res.Uuid, res.Username, res.TrainerLvl, res.TrainerExp, res.HaveAr, res.LatTarget, res.LonTarget, len(res.Contents))
+	for _, content := range res.Contents {
+		if content.Method == 2 {
+			getPlayerOutProto := decodeGetPlayerOutProto(content)
+			accountManager.UpdateDetailsFromGame(res.Username, getPlayerOutProto, res.TrainerLvl)
+		}
+	}
 	return
 }
 
@@ -104,4 +123,13 @@ func rawSender(url string, password string, c *gin.Context, data rawBody) {
 	_ = resp.Body.Close()
 
 	log.Debugf("Webhook: Response %s", resp.Status)
+}
+
+func decodeGetPlayerOutProto(content content) *pogo.GetPlayerOutProto {
+	getPlayerProto := &pogo.GetPlayerOutProto{}
+	data, _ := b64.StdEncoding.DecodeString(content.Data)
+	if err := proto.Unmarshal(data, getPlayerProto); err != nil {
+		log.Fatalln("Failed to parse", err)
+	}
+	return getPlayerProto
 }

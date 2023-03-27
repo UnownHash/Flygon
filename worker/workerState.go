@@ -35,15 +35,6 @@ func GetWorkerState(workerId string) *WorkerState {
 	}
 }
 
-func RemoveWorkerState(workerId string) {
-	stateMutex.Lock()
-	defer stateMutex.Unlock()
-
-	if _, ok := state[workerId]; ok {
-		delete(state, workerId)
-	}
-}
-
 func CleanWorkerState() {
 	stateMutex.Lock()
 	defer stateMutex.Unlock()
@@ -89,6 +80,7 @@ func (ws *WorkerState) ResetUsername() {
 	ws.Username = ""
 }
 
-func (ws *WorkerState) UpdateLastSeen() {
+func (ws *WorkerState) Touch(host string) {
 	ws.LastSeen = time.Now().Unix()
+	ws.Host = host
 }

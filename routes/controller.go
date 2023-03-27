@@ -47,14 +47,12 @@ func (a MitmAction) String() string {
 
 func Controller(c *gin.Context) {
 	var req ControllerBody
-	host := c.RemoteIP()
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
 		log.Warnf("POST /controler/ in wrong format! %s", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	log.Printf("Got request from %s here into routes: %+v", host, req)
 	ws := worker.GetWorkerState(req.Uuid)
 	switch req.Type {
 	case "init":
@@ -85,7 +83,7 @@ func Controller(c *gin.Context) {
 }
 
 func handleInit(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
-	log.Printf("handleInit")
+	log.Debugf("[CONTROLLER] [%s] handleInit", body.Uuid)
 	assigned := false
 	if a, err := workerState.AllocateArea(); err != nil {
 		log.Errorf("Error happened on allocating area %s", err.Error())
@@ -103,14 +101,14 @@ func handleInit(c *gin.Context, body ControllerBody, workerState *worker.WorkerS
 }
 
 func handleHeartbeat(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
-	log.Printf("handleHeartbeat")
+	log.Debugf("[CONTROLLER] [%s] handleHeartbeat", body.Uuid)
 	workerState.LastSeen = time.Now().Unix()
 	respondWithOk(c)
 	return
 }
 
 func handleGetAccount(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
-	log.Printf("handleGetAccount")
+	log.Debugf("[CONTROLLER] [%s] handleGetAccount", body.Uuid)
 	account := accountManager.GetNextAccount(accounts.SelectLevel30)
 	if account == nil {
 		respondWithError(c, NoAccountLeft)
@@ -133,7 +131,7 @@ func handleGetAccount(c *gin.Context, body ControllerBody, workerState *worker.W
 }
 
 func handleGetJob(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
-	log.Printf("handleGetJob")
+	log.Debugf("[CONTROLLER] [%s] handleGetJob", body.Uuid)
 	isValid, err := accountManager.IsValidAccount(body.Username)
 	if err != nil {
 		respondWithError(c, AccountNotFound)
@@ -165,13 +163,13 @@ func handleGetJob(c *gin.Context, body ControllerBody, workerState *worker.Worke
 		"min_level": 30,
 		"max_level": 40,
 	}
-	log.Infof("[CONTROLLER] [%s] Sending task %s at %f, %f", body.Uuid, task["action"], task["lat"], task["lon"])
+	log.Debugf("[CONTROLLER] [%s] Sending task %s at %f, %f", body.Uuid, task["action"], task["lat"], task["lon"])
 	respondWithData(c, &task)
 	return
 }
 
 func handleTutorialDone(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
-	log.Printf("handleTutorialDone")
+	log.Debugf("[CONTROLLER] [%s] handleTutorialDone", body.Uuid)
 	if !accountManager.AccountExists(body.Username) {
 		respondWithError(c, AccountNotFound)
 		return
@@ -182,7 +180,7 @@ func handleTutorialDone(c *gin.Context, body ControllerBody, workerState *worker
 }
 
 func handleAccountBanned(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
-	log.Printf("handleAccountBanned")
+	log.Debugf("[CONTROLLER] [%s] handleAccountBanned", body.Uuid)
 	if len(body.Username) == 0 {
 		c.Status(http.StatusBadRequest)
 		return
@@ -198,7 +196,7 @@ func handleAccountBanned(c *gin.Context, body ControllerBody, workerState *worke
 }
 
 func handleAccountSuspended(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
-	log.Printf("handleAccountSuspended")
+	log.Debugf("[CONTROLLER] [%s] handleAccountSuspended", body.Uuid)
 	if len(body.Username) == 0 {
 		c.Status(http.StatusBadRequest)
 		return
@@ -214,7 +212,7 @@ func handleAccountSuspended(c *gin.Context, body ControllerBody, workerState *wo
 }
 
 func handleAccountWarning(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
-	log.Printf("handleAccountWarning")
+	log.Debugf("[CONTROLLER] [%s] handleAccountWarning", body.Uuid)
 	if len(body.Username) == 0 {
 		c.Status(http.StatusBadRequest)
 		return
@@ -230,7 +228,7 @@ func handleAccountWarning(c *gin.Context, body ControllerBody, workerState *work
 }
 
 func handleAccountInvalidCredentials(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
-	log.Printf("handleAccountInvalidCredentials")
+	log.Debugf("[CONTROLLER] [%s] handleAccountInvalidCredentials", body.Uuid)
 	if len(body.Username) == 0 {
 		c.Status(http.StatusBadRequest)
 		return
@@ -246,7 +244,7 @@ func handleAccountInvalidCredentials(c *gin.Context, body ControllerBody, worker
 }
 
 func handleAccountUnknownError(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
-	log.Printf("handleAccountUnknownError")
+	log.Debugf("[CONTROLLER] [%s] handleAccountUnknownError", body.Uuid)
 	if len(body.Username) == 0 {
 		c.Status(http.StatusBadRequest)
 		return
@@ -261,8 +259,9 @@ func handleAccountUnknownError(c *gin.Context, body ControllerBody, workerState 
 }
 
 func handleLoggedOut(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
-	log.Printf("handleLoggedOut")
-	worker.RemoveWorkerState(body.Username)
+	log.Debugf("[CONTROLLER] [%s] handleLoggedOut", body.Uuid)
+	workerState.ResetUsername()
+	accountManager.ReleaseAccount(body.Username)
 	respondWithOk(c)
 	return
 }
