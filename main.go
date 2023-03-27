@@ -4,6 +4,7 @@ import (
 	"Flygon/accounts"
 	"Flygon/config"
 	"Flygon/db"
+	"Flygon/external"
 	"Flygon/golbatapi"
 	"Flygon/routecalc"
 	"Flygon/routes"
@@ -22,6 +23,12 @@ import (
 
 func main() {
 	config.ReadConfig()
+
+	// Both Sentry & Pyroscope are optional and off by default. Read more:
+	// https://docs.sentry.io/platforms/go
+	// https://pyroscope.io/docs/golang
+	external.InitSentry()
+	external.InitPyroscope()
 
 	logLevel := log.InfoLevel
 	if config.Config.General.DebugLogging == true {

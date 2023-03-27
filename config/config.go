@@ -1,9 +1,11 @@
 package config
 
 type configDefinition struct {
-	General    generalDefinition
-	Processors processorDefinition
-	Db         DbDefinition `toml:"db"`
+	General    generalDefinition   `toml:"general"`
+	Processors processorDefinition `toml:"processors"`
+	Db         DbDefinition        `toml:"db"`
+	Sentry     sentry              `toml:"sentry"`
+	Pyroscope  pyroscope           `toml:"pyroscope"`
 }
 
 type generalDefinition struct {
@@ -35,6 +37,22 @@ type DbDefinition struct {
 	Password string
 	Name     string
 	PoolSize int `toml:"pool_size"`
+}
+
+type sentry struct {
+	DSN              string  `toml:"dsn"`
+	SampleRate       float64 `toml:"sample_rate"`
+	EnableTracing    bool    `toml:"enable_tracing"`
+	TracesSampleRate float64 `toml:"traces_sample_rate"`
+}
+
+type pyroscope struct {
+	ApplicationName      string `toml:"application_name"`
+	ServerAddress        string `toml:"server_address"`
+	ApiKey               string `toml:"api_key"`
+	Logger               bool   `toml:"logger"`
+	MutexProfileFraction int    `toml:"mutex_profile_fraction"`
+	BlockProfileRate     int    `toml:"block_profile_rate"`
 }
 
 var Config = configDefinition{
