@@ -2,6 +2,10 @@
 login_delay = 20
 # seconds to sleep in-between send Auth Credentials to a unique IP
 
+worker_stats = false
+worker_stats_interval = 5
+# how often worker stats are written (in minutes)
+
 koji_url = "http://ip:port"
 koji_bearer_token = "KOJI_SECRET"
 
@@ -22,7 +26,11 @@ bearerToken = ""
 golbat_endpoint = "http://127.0.0.1:9001"
 golbat_raw_bearer = ""
 golbat_api_secret = ""
-# Golbat Endpoint will be used raw processing.
+rdm_endpoints = ["token@http://127.0.0.1:9001/raw"]
+# raw_endpoints can be used for any endpoint that accepts the same raw proto format RDM does.
+# Golbat Endpoint will be used for other means than just raw processing.
+# rdm_endpoints are arrays, so if you i.e. don't want any rdm endpoints, just put `rdm_endpoints = []`. You can also use
+# multiple for each.
 
 
 [db]

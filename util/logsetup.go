@@ -52,9 +52,5 @@ type PlainFormatter struct {
 
 func (f *PlainFormatter) Format(entry *log.Entry) ([]byte, error) {
 	timestamp := fmt.Sprintf(entry.Time.Format(f.TimestampFormat))
-	worker := ""
-	if w, found := entry.Data["worker"]; found {
-		worker = w.(string)
-	}
-	return []byte(fmt.Sprintf("%s %s [%s] %s\n", f.LevelDesc[entry.Level], timestamp, worker, entry.Message)), nil
+	return []byte(fmt.Sprintf("%s %s %s\n", f.LevelDesc[entry.Level], timestamp, entry.Message)), nil
 }
