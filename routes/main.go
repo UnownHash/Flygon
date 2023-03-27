@@ -44,9 +44,24 @@ func StartGin() {
 		c.JSON(http.StatusOK, gin.H{"version": Version, "commit": Commit})
 	})
 	//protected.POST("/clear-quests", ClearQuests)
-	//protected.POST("/reload-geojson", ReloadGeojson)
-	//protected.GET("/reload-geojson", ReloadGeojson)
-	//protected.POST("/query-pokemon", QueryPokemon)
+
+	protectedApi.GET("/areas/", GetAreas)
+	protectedApi.GET("/areas/:area_id", GetOneArea)
+	protectedApi.POST("/areas/", PostArea)
+	protectedApi.DELETE("/areas/:area_id", DeleteArea)
+	protectedApi.PATCH("/areas/:area_id", PatchArea)
+
+	protectedApi.GET("/accounts/", GetAccounts)
+	protectedApi.GET("/accounts/stats", GetAccountsStats)
+	protectedApi.GET("/accounts/level-stats", GetLevelStats)
+	protectedApi.GET("/accounts/:account_name", GetOneAccount)
+	protectedApi.POST("/accounts/", PostAccount)
+	protectedApi.DELETE("/accounts/", DeleteAccount)
+	protectedApi.PATCH("/accounts/", PatchAccount)
+	protectedApi.GET("/reload/accounts", GetReloadAccounts)
+
+	protectedApi.GET("/reload", GetReload)
+	protectedApi.GET("/log-rotate", GetLogRotate)
 
 	addr := fmt.Sprintf("%s:%d", config.Config.General.Host, config.Config.General.Port)
 	err := r.Run(addr)

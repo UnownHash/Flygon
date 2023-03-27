@@ -11,23 +11,22 @@ import (
 )
 
 type Area struct {
-	Id                     int         `db:"id"`
-	Name                   string      `db:"name"`
-	PokemonModeWorkers     int         `db:"pokemon_mode_workers"`
-	PokemonModeRoute       null.String `db:"pokemon_mode_route"`
-	FortModeWorkers        int         `db:"fort_mode_workers"`
-	FortModeRoute          null.String `db:"fort_mode_route"`
-	QuestModeWorkers       int         `db:"quest_mode_workers"`
-	QuestModeHours         null.String `db:"quest_mode_hours"`
-	QuestModeRoute         null.String `db:"quest_mode_route"`
-	QuestModeMaxLoginQueue null.Int    `db:"quest_mode_max_login_queue"`
-	Geofence               null.String `db:"geofence"`
-	EnableQuests           bool        `db:"enable_quests"`
+	Id                 int         `db:"id"`
+	Name               string      `db:"name"`
+	PokemonModeWorkers int         `db:"pokemon_mode_workers"`
+	PokemonModeRoute   null.String `db:"pokemon_mode_route"`
+	FortModeWorkers    int         `db:"fort_mode_workers"`
+	FortModeRoute      null.String `db:"fort_mode_route"`
+	QuestModeWorkers   int         `db:"quest_mode_workers"`
+	QuestModeHours     null.String `db:"quest_mode_hours"`
+	QuestModeRoute     null.String `db:"quest_mode_route"`
+	Geofence           null.String `db:"geofence"`
+	EnableQuests       bool        `db:"enable_quests"`
 }
 
 func GetAreaRecords(db DbDetails) ([]Area, error) {
 	areas := []Area{}
-	err := db.FlygonDb.Select(&areas, "SELECT id, name, pokemon_mode_workers, pokemon_mode_route, fort_mode_workers, fort_mode_route, quest_mode_workers, quest_mode_hours, quest_mode_route, quest_mode_max_login_queue, geofence, enable_quests FROM area")
+	err := db.FlygonDb.Select(&areas, "SELECT id, name, pokemon_mode_workers, pokemon_mode_route, fort_mode_workers, fort_mode_route, quest_mode_workers, quest_mode_hours, quest_mode_route, geofence, enable_quests FROM area")
 
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -42,7 +41,7 @@ func GetAreaRecords(db DbDetails) ([]Area, error) {
 
 func GetAreaRecord(db DbDetails, id int) (*Area, error) {
 	area := []Area{}
-	err := db.FlygonDb.Select(&area, "SELECT id, name, pokemon_mode_workers, pokemon_mode_route, fort_mode_workers, fort_mode_route, quest_mode_workers, quest_mode_hours, quest_mode_route, quest_mode_max_login_queue, geofence, enable_quests FROM area "+
+	err := db.FlygonDb.Select(&area, "SELECT id, name, pokemon_mode_workers, pokemon_mode_route, fort_mode_workers, fort_mode_route, quest_mode_workers, quest_mode_hours, quest_mode_route, geofence, enable_quests FROM area "+
 		"WHERE id = ?", id)
 
 	if err == sql.ErrNoRows {

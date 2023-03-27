@@ -7,7 +7,10 @@ CREATE TABLE `account`
     `warn_expiration` int(11) unsigned DEFAULT 0,
     `suspended`       tinyint(1) unsigned DEFAULT 0,
     `banned`          tinyint(1) unsigned DEFAULT 0,
-    `disabled`        tinyint(1) unsigned DEFAULT 0,
+    `invalid`         tinyint(1) unsigned DEFAULT 0,
+    `last_disabled`   int(11) DEFAULT NULL,
+    `last_banned`     int(11) DEFAULT NULL,
+    `last_suspended`  int(11) DEFAULT NULL,
     `last_selected`   int(11) DEFAULT NULL,
     `last_released`   int(11) DEFAULT NULL,
     PRIMARY KEY (`username`)
@@ -26,7 +29,6 @@ CREATE TABLE `area`
     `enable_quests`              tinyint(1) NOT NULL DEFAULT 0,
     `quest_mode_route`           text DEFAULT NULL,
     `quest_mode_hours`           text DEFAULT NULL,
-    `quest_mode_max_login_queue` smallint(5) unsigned DEFAULT NULL,
     PRIMARY KEY (`id`),
     UNIQUE KEY `unique_area_name` (`name`)
 );
