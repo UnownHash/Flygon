@@ -17,6 +17,10 @@ func ReadConfig() {
 
 	byteValue, _ := ioutil.ReadAll(tomlFile)
 
+	// Provide a default value
+	Config.General.SaveLogs = true
+	Config.Db.MaxPool = 50
+
 	err = toml.Unmarshal([]byte(byteValue), &Config)
 	if err != nil {
 		panic(err)

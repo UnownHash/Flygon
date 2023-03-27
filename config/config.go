@@ -36,7 +36,7 @@ type DbDefinition struct {
 	User     string
 	Password string
 	Name     string
-	PoolSize int `toml:"pool_size"`
+	MaxPool  int `toml:"max_pool"`
 }
 
 type sentry struct {
@@ -60,7 +60,7 @@ var Config = configDefinition{
 		WorkerStatsInterval: 5,
 		SaveLogs:            true,
 		Host:                "0.0.0.0",
-		Port:                9001,
+		Port:                9002,
 		LoginDelay:          20,
 	},
 }

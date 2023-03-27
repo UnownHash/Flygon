@@ -63,7 +63,7 @@ func main() {
 			config.Config.Processors.GolbatRawBearer,
 			config.Config.Processors.GolbatApiSecret)
 	}
-	routes.SetRawEndpoints(getRawEndpoints())
+	routes.SetRawEndpoints(getRawEndpointsFromConfig())
 	routes.StartGin()
 
 }
@@ -80,7 +80,7 @@ func connectDb(dbDetails config.DbDefinition) *sqlx.DB {
 		return nil
 	}
 
-	dbConnection.SetMaxOpenConns(50)
+	dbConnection.SetMaxOpenConns(config.Config.Db.MaxPool)
 	dbConnection.SetMaxIdleConns(10)
 	dbConnection.SetConnMaxIdleTime(time.Minute)
 
@@ -134,7 +134,7 @@ func performDatabaseMigration(dbDetails config.DbDefinition) {
 	}
 }
 
-func getRawEndpoints() (urlList []routes.RawEndpoint) {
+func getRawEndpointsFromConfig() (urlList []routes.RawEndpoint) {
 
 	urlList = []routes.RawEndpoint{}
 	if config.Config.Processors.GolbatEndpoint != "" {
