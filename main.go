@@ -52,15 +52,14 @@ func main() {
 	am := accounts.AccountManager{}
 	am.LoadAccounts(dbDetails)
 
-	routes.ConnectDatabase(&dbDetails)
 	routecalc.SetKojiUrl(config.Config.General.KojiUrl, config.Config.General.KojiBearerToken)
+	routes.ConnectDatabase(&dbDetails)
 	routes.LoadAccountManager(&am)
 	worker.StartAreas(dbDetails, &am)
 	worker.InitWorkerState()
 	//worker.StartUnbound(dbDetails, &am, authenticationQueue)
 	if config.Config.Processors.GolbatEndpoint != "" {
 		golbatapi.SetApiUrl(config.Config.Processors.GolbatEndpoint,
-			config.Config.Processors.GolbatRawBearer,
 			config.Config.Processors.GolbatApiSecret)
 	}
 	routes.SetRawEndpoints(getRawEndpointsFromConfig())
