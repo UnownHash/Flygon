@@ -2,7 +2,6 @@ package worker
 
 import (
 	"sync"
-	"time"
 )
 
 type WorkerState struct {
@@ -11,6 +10,7 @@ type WorkerState struct {
 	StartStep int
 	EndStep   int
 	Step      int
+	Host      string
 	LastSeen  int64
 }
 
@@ -27,16 +27,11 @@ func GetWorkerState(workerId string) *WorkerState {
 
 	if s, found := state[workerId]; !found {
 		newState := &WorkerState{}
-		newState.LastSeen = time.Now().Unix()
 		state[workerId] = newState
 		return newState
 	} else {
 		return s
 	}
-}
-
-func (ws *WorkerState) ResetUsername() {
-	ws.Username = ""
 }
 
 func RemoveWorkerState(workerId string) {
@@ -87,4 +82,8 @@ func GetWorkersWithArea(areaId int) []*WorkerState {
 	}
 
 	return workers
+}
+
+func (ws *WorkerState) ResetUsername() {
+	ws.Username = ""
 }

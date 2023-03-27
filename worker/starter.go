@@ -65,6 +65,7 @@ func StartAreas(dbDetails db.DbDetails, am *accounts.AccountManager) {
 		s.Every(1).Hour().Do(QuestRouteBuilder)
 		s.StartAsync()
 	}
+	StartWorkerRoutePartRecalculationScheduler()
 }
 
 func StartQuest(areaId int) bool {

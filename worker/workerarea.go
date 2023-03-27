@@ -167,18 +167,68 @@ func (ws *WorkerState) AllocateArea() (*WorkerArea, error) {
 func (p *WorkerArea) RecalculateRouteParts() {
 	workersInArea := GetWorkersWithArea(p.Id)
 
-	workers := len(workersInArea)
-	// split route into parts
-	// this is not right because the workers are not stable (they could come in a different order).
-	// perhaps they should now be sorted by a login time
-	for i := 0; i < workers; i++ {
-		ws := workersInArea[i]
-		// this is not quite the right code but is an example
-		ws.StartStep = i * len(p.pokemonRoute) / workers
-		ws.EndStep = (i+1)*len(p.pokemonRoute)/workers - 1
+	// Filter out workers that have not been seen for more than 5 minutes
+	var activeWorkers []*WorkerState
+	now := time.Now().Unix()
+	for _, ws := range workersInArea {
+		if now-ws.LastSeen <= 300 { // 300 seconds = 5 minutes
+			activeWorkers = append(activeWorkers, ws)
+		}
+	}
 
+	// Calculate route parts
+	numSteps := len(p.pokemonRoute)
+	numWorkers := len(activeWorkers)
+	stepsPerWorker := numSteps / numWorkers
+	extraSteps := numSteps % numWorkers
+	startStep := 0
+
+	// The stepsPerWorker variable stores the number of steps that each worker would get if the route was evenly divided.
+	// The extraSteps variable calculates the number of additional steps that need to be assigned to the first extraSteps workers.
+	// The startStep variable keeps track of the first step assigned to the current worker,
+	// and endStep is calculated by adding stepsPerWorker and the additional steps if applicable.
+	for i := 0; i < numWorkers; i++ {
+		endStep := startStep + stepsPerWorker - 1
+		if i < extraSteps {
+			endStep++
+		}
+
+		// Update worker state
+		ws := workersInArea[i]
+		ws.StartStep = startStep
+		ws.EndStep = endStep
 		if ws.Step < ws.StartStep || ws.Step > ws.EndStep {
 			ws.Step = ws.StartStep
+		}
+
+		startStep = endStep + 1
+	}
+}
+
+func StartWorkerRoutePartRecalculationScheduler() {
+	// Schedule the recalculation function to run every 5 minutes
+	ticker := time.NewTicker(5 * time.Minute)
+	go func() {
+		for {
+			<-ticker.C
+			log.Infof("Recaclulate Route Parts If Needed")
+			RecalculateRoutePartsIfNeeded()
+		}
+	}()
+}
+
+func RecalculateRoutePartsIfNeeded() {
+	for _, p := range workerAreas {
+		workersInArea := GetWorkersWithArea(p.Id)
+		// Check if any workers have not been seen for more than 5 minutes
+		now := time.Now().Unix()
+		for _, ws := range workersInArea {
+			if now-ws.LastSeen > 300 { // 300 seconds = 5 minutes
+				// Recalculate route parts and update worker state
+				log.Warnf("Worker %s not seen last 5 minutes, recalculate route", ws.Username)
+				p.RecalculateRouteParts()
+				break
+			}
 		}
 	}
 }
@@ -293,9 +343,6 @@ func (p *WorkerArea) calculateQuestRoute() {
 	}
 	log.Infof("KOJI: quest route is empty and koji url is empty, no routes will be calculated")
 
-	// else {
-	// 	p.calculateInternalQuestRoute()
-	// }
 }
 
 func (p *WorkerArea) calculateKojiQuestRoute() {
@@ -308,9 +355,6 @@ func (p *WorkerArea) calculateKojiQuestRoute() {
 		p.questRoute = shortRoute
 	}
 	log.Errorf("Unable to calculate fast route - error %s", err)
-	// else {
-	// 	p.calculateInternalQuestRoute()
-	// }
 }
 
 func (p *WorkerArea) AdjustQuestRoute(route []geo.Location) {

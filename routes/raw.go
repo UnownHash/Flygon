@@ -59,7 +59,7 @@ func Raw(c *gin.Context) {
 	for _, endpoint := range rawEndpoints {
 		password := endpoint.BearerToken
 		destinationUrl := endpoint.Url
-		rawSender(destinationUrl, password, res)
+		go rawSender(destinationUrl, password, res)
 	}
 	//body, _ := ioutil.ReadAll(c.Request.Body)
 	//log.Printf("Got here into Raw: %+v", res)
