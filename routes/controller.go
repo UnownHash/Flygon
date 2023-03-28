@@ -82,13 +82,13 @@ func Controller(c *gin.Context) {
 	}
 }
 
-func handleInit(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
-	log.Debugf("[CONTROLLER] [%s] handleInit", body.Uuid)
+func handleInit(c *gin.Context, req ControllerBody, workerState *worker.State) {
+	log.Debugf("[CONTROLLER] [%s] Init", req.Uuid)
 	assigned := false
 	if a, err := workerState.AllocateArea(); err != nil {
 		log.Errorf("Error happened on allocating area %s", err.Error())
 	} else {
-		log.Infof("Allocated area %d:%s to worker %s", workerState.AreaId, a.Name, body.Uuid)
+		log.Infof("Allocated area %d:%s to worker %s", workerState.AreaId, a.Name, req.Uuid)
 		assigned = true
 	}
 	respondWithData(c, &map[string]any{
@@ -100,15 +100,15 @@ func handleInit(c *gin.Context, body ControllerBody, workerState *worker.WorkerS
 	return
 }
 
-func handleHeartbeat(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
-	log.Debugf("[CONTROLLER] [%s] handleHeartbeat", body.Uuid)
+func handleHeartbeat(c *gin.Context, req ControllerBody, workerState *worker.State) {
+	log.Debugf("[CONTROLLER] [%s] Heartbeat", req.Uuid)
 	workerState.LastSeen = time.Now().Unix()
 	respondWithOk(c)
 	return
 }
 
-func handleGetAccount(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
-	log.Debugf("[CONTROLLER] [%s] handleGetAccount", body.Uuid)
+func handleGetAccount(c *gin.Context, req ControllerBody, workerState *worker.State) {
+	log.Debugf("[CONTROLLER] [%s] GetAccount", req.Uuid)
 	account := accountManager.GetNextAccount(accounts.SelectLevel30)
 	if account == nil {
 		respondWithError(c, NoAccountLeft)
@@ -130,9 +130,9 @@ func handleGetAccount(c *gin.Context, body ControllerBody, workerState *worker.W
 	return
 }
 
-func handleGetJob(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
-	log.Debugf("[CONTROLLER] [%s] handleGetJob", body.Uuid)
-	isValid, err := accountManager.IsValidAccount(body.Username)
+func handleGetJob(c *gin.Context, req ControllerBody, workerState *worker.State) {
+	log.Debugf("[CONTROLLER] [%s] GetJob From Account: %s", req.Uuid, req.Username)
+	isValid, err := accountManager.IsValidAccount(req.Username)
 	if err != nil {
 		respondWithError(c, AccountNotFound)
 	}
@@ -163,105 +163,105 @@ func handleGetJob(c *gin.Context, body ControllerBody, workerState *worker.Worke
 		"min_level": 30,
 		"max_level": 40,
 	}
-	log.Debugf("[CONTROLLER] [%s] Sending task %s at %f, %f", body.Uuid, task["action"], task["lat"], task["lon"])
+	log.Debugf("[CONTROLLER] [%s] Sending task %s at %f, %f", req.Uuid, task["action"], task["lat"], task["lon"])
 	respondWithData(c, &task)
 	return
 }
 
-func handleTutorialDone(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
-	log.Debugf("[CONTROLLER] [%s] handleTutorialDone", body.Uuid)
-	if !accountManager.AccountExists(body.Username) {
+func handleTutorialDone(c *gin.Context, req ControllerBody, workerState *worker.State) {
+	log.Debugf("[CONTROLLER] [%s] TutorialDone from Account: %s", req.Uuid, req.Username)
+	if !accountManager.AccountExists(req.Username) {
 		respondWithError(c, AccountNotFound)
 		return
 	}
-	accountManager.MarkTutorialDone(body.Username)
+	accountManager.MarkTutorialDone(req.Username)
 	respondWithOk(c)
 	return
 }
 
-func handleAccountBanned(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
-	log.Debugf("[CONTROLLER] [%s] handleAccountBanned", body.Uuid)
-	if len(body.Username) == 0 {
+func handleAccountBanned(c *gin.Context, req ControllerBody, workerState *worker.State) {
+	log.Debugf("[CONTROLLER] [%s] AccountBanned from Account: %s", req.Uuid, req.Username)
+	if len(req.Username) == 0 {
 		c.Status(http.StatusBadRequest)
 		return
 	}
-	if !accountManager.AccountExists(body.Username) {
+	if !accountManager.AccountExists(req.Username) {
 		respondWithError(c, AccountNotFound)
 		return
 	}
 	workerState.ResetUsername()
-	accountManager.MarkBanned(body.Username)
+	accountManager.MarkBanned(req.Username)
 	respondWithOk(c)
 	return
 }
 
-func handleAccountSuspended(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
-	log.Debugf("[CONTROLLER] [%s] handleAccountSuspended", body.Uuid)
-	if len(body.Username) == 0 {
+func handleAccountSuspended(c *gin.Context, req ControllerBody, workerState *worker.State) {
+	log.Debugf("[CONTROLLER] [%s] AccountSuspended from Account: %s", req.Uuid, req.Username)
+	if len(req.Username) == 0 {
 		c.Status(http.StatusBadRequest)
 		return
 	}
-	if !accountManager.AccountExists(body.Username) {
+	if !accountManager.AccountExists(req.Username) {
 		respondWithError(c, AccountNotFound)
 		return
 	}
 	workerState.ResetUsername()
-	accountManager.MarkSuspended(body.Username)
+	accountManager.MarkSuspended(req.Username)
 	respondWithOk(c)
 	return
 }
 
-func handleAccountWarning(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
-	log.Debugf("[CONTROLLER] [%s] handleAccountWarning", body.Uuid)
-	if len(body.Username) == 0 {
+func handleAccountWarning(c *gin.Context, req ControllerBody, workerState *worker.State) {
+	log.Debugf("[CONTROLLER] [%s] AccountWarning from Account: %s", req.Uuid, req.Username)
+	if len(req.Username) == 0 {
 		c.Status(http.StatusBadRequest)
 		return
 	}
-	if !accountManager.AccountExists(body.Username) {
+	if !accountManager.AccountExists(req.Username) {
 		respondWithError(c, AccountNotFound)
 		return
 	}
 	workerState.ResetUsername()
-	accountManager.MarkBanned(body.Username)
+	accountManager.MarkBanned(req.Username)
 	respondWithOk(c)
 	return
 }
 
-func handleAccountInvalidCredentials(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
-	log.Debugf("[CONTROLLER] [%s] handleAccountInvalidCredentials", body.Uuid)
-	if len(body.Username) == 0 {
+func handleAccountInvalidCredentials(c *gin.Context, req ControllerBody, workerState *worker.State) {
+	log.Debugf("[CONTROLLER] [%s] AccountInvalidCredentials from Account: %s", req.Uuid, req.Username)
+	if len(req.Username) == 0 {
 		c.Status(http.StatusBadRequest)
 		return
 	}
-	if !accountManager.AccountExists(body.Username) {
+	if !accountManager.AccountExists(req.Username) {
 		respondWithError(c, AccountNotFound)
 		return
 	}
 	workerState.ResetUsername()
-	accountManager.MarkInvalid(body.Username)
+	accountManager.MarkInvalid(req.Username)
 	respondWithOk(c)
 	return
 }
 
-func handleAccountUnknownError(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
-	log.Debugf("[CONTROLLER] [%s] handleAccountUnknownError", body.Uuid)
-	if len(body.Username) == 0 {
+func handleAccountUnknownError(c *gin.Context, req ControllerBody, workerState *worker.State) {
+	log.Debugf("[CONTROLLER] [%s] AccountUnknownError from Account: %s", req.Uuid, req.Username)
+	if len(req.Username) == 0 {
 		c.Status(http.StatusBadRequest)
 		return
 	}
-	if !accountManager.AccountExists(body.Username) {
+	if !accountManager.AccountExists(req.Username) {
 		respondWithError(c, AccountNotFound)
 		return
 	}
-	accountManager.MarkDisabled(body.Username)
+	accountManager.MarkDisabled(req.Username)
 	respondWithOk(c)
 	return
 }
 
-func handleLoggedOut(c *gin.Context, body ControllerBody, workerState *worker.WorkerState) {
-	log.Debugf("[CONTROLLER] [%s] handleLoggedOut", body.Uuid)
+func handleLoggedOut(c *gin.Context, req ControllerBody, workerState *worker.State) {
+	log.Debugf("[CONTROLLER] [%s] LoggedOut from Account: %s", req.Uuid, req.Username)
 	workerState.ResetUsername()
-	accountManager.ReleaseAccount(body.Username)
+	accountManager.ReleaseAccount(req.Username)
 	respondWithOk(c)
 	return
 }

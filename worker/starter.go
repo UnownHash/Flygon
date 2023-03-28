@@ -17,12 +17,10 @@ var accountsManager *accounts.AccountManager
 
 var naughtyDetails db.DbDetails
 
-func StartAreas(dbDetails db.DbDetails, am *accounts.AccountManager) {
+func StartAreas(dbDetails db.DbDetails) {
 	naughtyDetails = dbDetails // temp steal these
 
 	areas, _ := db.GetAreaRecords(dbDetails)
-
-	accountsManager = am
 
 	for _, area := range areas {
 		areaRoute, err := db.ParseRouteFromString(area.PokemonModeRoute.ValueOrZero())
@@ -54,7 +52,7 @@ func StartAreas(dbDetails db.DbDetails, am *accounts.AccountManager) {
 		noWorkers := area.PokemonModeWorkers
 		areaName := area.Name
 
-		workerArea := NewWorkerArea(area.Id, areaName, noWorkers, areaRoute, geo.Geofence{Fence: geofenceLocations}, questRoute, questCheckHours, am)
+		workerArea := NewWorkerArea(area.Id, areaName, noWorkers, areaRoute, geo.Geofence{Fence: geofenceLocations}, questRoute, questCheckHours)
 		RegisterArea(workerArea)
 
 		//go workerArea.Start()
@@ -156,7 +154,7 @@ func ReloadAreas(dbDetails db.DbDetails) {
 			noWorkers := area.PokemonModeWorkers
 			areaName := area.Name
 
-			workerArea := NewWorkerArea(area.Id, areaName, noWorkers, areaRoute, geo.Geofence{Fence: geofenceLocations}, questRoute, questCheckHours, accountsManager)
+			workerArea := NewWorkerArea(area.Id, areaName, noWorkers, areaRoute, geo.Geofence{Fence: geofenceLocations}, questRoute, questCheckHours)
 			RegisterArea(workerArea)
 
 			//go workerArea.Start()

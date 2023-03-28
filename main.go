@@ -55,7 +55,7 @@ func main() {
 	routecalc.SetKojiUrl(config.Config.General.KojiUrl, config.Config.General.KojiBearerToken)
 	routes.ConnectDatabase(&dbDetails)
 	routes.LoadAccountManager(&am)
-	worker.StartAreas(dbDetails, &am)
+	worker.StartAreas(dbDetails)
 	worker.InitWorkerState()
 	//worker.StartUnbound(dbDetails, &am, authenticationQueue)
 	if config.Config.Processors.GolbatEndpoint != "" {

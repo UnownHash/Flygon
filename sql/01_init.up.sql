@@ -33,25 +33,6 @@ CREATE TABLE `area`
     UNIQUE KEY `unique_area_name` (`name`)
 );
 
-CREATE TABLE `device`
-(
-    uuid             varchar(40) not null primary key,
-    area_id          int(10) unsigned null,
-    last_host        varchar(30) null,
-    last_seen        int unsigned default '0' not null,
-    account_username varchar(32) null,
-    last_lat         double default 0 null,
-    last_lon         double default 0 null,
-    constraint uk_iaccount_username
-        unique (account_username),
-    constraint fk_account_username
-        foreign key (account_username) references account (username)
-            on update cascade on delete set null,
-    constraint fk_area_id
-        foreign key (area_id) references area (id)
-            on update cascade on delete set null
-);
-
 CREATE TABLE `quest_check`
 (
     `area_id`   int(10) unsigned NOT NULL,

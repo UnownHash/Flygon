@@ -6,19 +6,12 @@ import (
 	"sync"
 	"time"
 
-	"Flygon/accounts"
 	"Flygon/config"
 	"Flygon/geo"
 	"Flygon/golbatapi"
 	"Flygon/routecalc"
 	log "github.com/sirupsen/logrus"
 )
-
-type encounterCacheKey struct {
-	encounterId  uint64
-	pokemonId    int32
-	weatherBoost int32
-}
 
 type WorkerArea struct {
 	Id                int
@@ -36,11 +29,15 @@ type WorkerArea struct {
 	routeCalcMutex sync.Mutex
 	routeCalcTime  time.Time
 
-	accountManager *accounts.AccountManager
-
 	pokemonEncounterCache *ttlcache.Cache[encounterCacheKey, bool]
 	pokestopCache         *ttlcache.Cache[string, *PokestopQuestInfo]
 	questCheckHours       []int
+}
+
+type encounterCacheKey struct {
+	encounterId  uint64
+	pokemonId    int32
+	weatherBoost int32
 }
 
 type PokestopQuestInfo struct {
@@ -102,13 +99,12 @@ func GetWorkerArea(areaId int) *WorkerArea {
 	return nil
 }
 
-func NewWorkerArea(id int, name string, workerCount int, route []geo.Location, questGeofence geo.Geofence, questRoute []geo.Location, questCheckHours []int, accountManager *accounts.AccountManager) *WorkerArea {
+func NewWorkerArea(id int, name string, workerCount int, route []geo.Location, questGeofence geo.Geofence, questRoute []geo.Location, questCheckHours []int) *WorkerArea {
 	w := WorkerArea{
 		Id:                 id,
 		Name:               name,
 		TargetWorkerCount:  workerCount,
 		route:              route,
-		accountManager:     accountManager,
 		pokemonRoute:       route,
 		workers:            workerCount,
 		questFence:         questGeofence,
@@ -121,7 +117,7 @@ func NewWorkerArea(id int, name string, workerCount int, route []geo.Location, q
 	return &w
 }
 
-func (ws *WorkerState) GetAllocatedArea() (*WorkerArea, error) {
+func (ws *State) GetAllocatedArea() (*WorkerArea, error) {
 	workerAccessMutex.Lock()
 	defer workerAccessMutex.Unlock()
 
@@ -132,19 +128,21 @@ func (ws *WorkerState) GetAllocatedArea() (*WorkerArea, error) {
 	}
 }
 
-func (ws *WorkerState) AllocateArea() (*WorkerArea, error) {
+func (ws *State) AllocateArea() (*WorkerArea, error) {
+	// worker is already assigned to an area, use that
+	if ws.AreaId != 0 { // no area uses ID = 0, auto increment starts with 1
+		return workerAreas[ws.AreaId], nil
+	}
 	// Find area with the least workers
 	// Add worker to area
-	// Set state
-
+	// Set states
 	workerAccessMutex.Lock()
 	defer workerAccessMutex.Unlock()
 	// Find area with the least workers that needs workers
 	var leastWorkersArea *WorkerArea
 	leastWorkersInArea := 0
 
-	for i := 0; i < len(workerAreas); i++ {
-		a := workerAreas[i]
+	for _, a := range workerAreas {
 		totalWorkerInArea := CountWorkersWithArea(a.Id)
 		if totalWorkerInArea >= a.workers {
 			continue
@@ -168,7 +166,7 @@ func (p *WorkerArea) RecalculateRouteParts() {
 	workersInArea := GetWorkersWithArea(p.Id)
 
 	// Filter out workers that have not been seen for more than 5 minutes
-	var activeWorkers []*WorkerState
+	var activeWorkers []*State
 	now := time.Now().Unix()
 	for _, ws := range workersInArea {
 		if now-ws.LastSeen <= 300 { // 300 seconds = 5 minutes
@@ -193,7 +191,7 @@ func (p *WorkerArea) RecalculateRouteParts() {
 			endStep++
 		}
 
-		// Update worker state
+		// Update worker states
 		ws := workersInArea[i]
 		ws.StartStep = startStep
 		ws.EndStep = endStep
@@ -224,7 +222,7 @@ func RecalculateRoutePartsIfNeeded() {
 		now := time.Now().Unix()
 		for _, ws := range workersInArea {
 			if now-ws.LastSeen > 300 { // 300 seconds = 5 minutes
-				// Recalculate route parts and update worker state
+				// Recalculate route parts and update worker states
 				log.Warnf("Worker %s not seen last 5 minutes, recalculate route", ws.Username)
 				p.RecalculateRouteParts()
 				break

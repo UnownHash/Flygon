@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type WorkerState struct {
+type State struct {
 	AreaId    int
 	Username  string
 	StartStep int
@@ -15,20 +15,20 @@ type WorkerState struct {
 	LastSeen  int64
 }
 
-var state map[string]*WorkerState
-var stateMutex sync.Mutex
+var states map[string]*State
+var statesMutex sync.Mutex
 
 func InitWorkerState() {
-	state = make(map[string]*WorkerState)
+	states = make(map[string]*State)
 }
 
-func GetWorkerState(workerId string) *WorkerState {
-	stateMutex.Lock()
-	defer stateMutex.Unlock()
+func GetWorkerState(workerId string) *State {
+	statesMutex.Lock()
+	defer statesMutex.Unlock()
 
-	if s, found := state[workerId]; !found {
-		newState := &WorkerState{}
-		state[workerId] = newState
+	if s, found := states[workerId]; !found {
+		newState := &State{}
+		states[workerId] = newState
 		return newState
 	} else {
 		return s
@@ -36,10 +36,10 @@ func GetWorkerState(workerId string) *WorkerState {
 }
 
 func CleanWorkerState() {
-	stateMutex.Lock()
-	defer stateMutex.Unlock()
+	statesMutex.Lock()
+	defer statesMutex.Unlock()
 
-	for k, v := range state {
+	for k, v := range states {
 		// Detect if area out of date; remove from area
 		// Remove from worker
 		_, _ = k, v
@@ -47,12 +47,12 @@ func CleanWorkerState() {
 }
 
 func CountWorkersWithArea(areaId int) int {
-	stateMutex.Lock()
-	defer stateMutex.Unlock()
+	statesMutex.Lock()
+	defer statesMutex.Unlock()
 
 	count := 0
-	for _, v := range state {
-		if v.AreaId == areaId && len(v.Username) > 0 {
+	for _, v := range states {
+		if v.AreaId == areaId {
 			count++
 		}
 	}
@@ -60,27 +60,24 @@ func CountWorkersWithArea(areaId int) int {
 	return count
 }
 
-func GetWorkersWithArea(areaId int) []*WorkerState {
-	stateMutex.Lock()
-	defer stateMutex.Unlock()
+func GetWorkersWithArea(areaId int) []*State {
+	statesMutex.Lock()
+	defer statesMutex.Unlock()
 
-	workers := make([]*WorkerState, 0)
-	for _, v := range state {
+	workers := make([]*State, 0)
+	for _, v := range states {
 		if v.AreaId == areaId {
-			if len(v.Username) > 0 { // only respect worker states with assigned username
-				workers = append(workers, v)
-			}
+			workers = append(workers, v)
 		}
 	}
-
 	return workers
 }
 
-func (ws *WorkerState) ResetUsername() {
+func (ws *State) ResetUsername() {
 	ws.Username = ""
 }
 
-func (ws *WorkerState) Touch(host string) {
+func (ws *State) Touch(host string) {
 	ws.LastSeen = time.Now().Unix()
 	ws.Host = host
 }

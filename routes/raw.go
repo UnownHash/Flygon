@@ -65,12 +65,8 @@ func Raw(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	host := c.RemoteIP()
-	ws := worker.GetWorkerState(res.Uuid)
-	ws.Touch(host)
-	if res.TrainerLvl > 0 {
-		accountManager.SetLevel(res.Username, res.TrainerLvl)
-	}
+	respondWithOk(c)
+
 	// no need to remove Encounter if trainerlvl below 30
 	// -> Golbat is already filtering that data
 	for _, endpoint := range rawEndpoints {
@@ -78,12 +74,20 @@ func Raw(c *gin.Context) {
 		destinationUrl := endpoint.Url
 		go rawSender(destinationUrl, password, c, res)
 	}
+
+	host := c.RemoteIP()
+	ws := worker.GetWorkerState(res.Uuid)
+	ws.Touch(host)
+	if res.TrainerLvl > 0 {
+		accountManager.SetLevel(res.Username, res.TrainerLvl)
+	}
 	//body, _ := ioutil.ReadAll(c.Request.Body)
 	//log.Printf("RAW: UUID: %s - USERNAME: %s - LVL: %d - EXP: %d - HAVE-AR: %b - AT: %f,%f- CONTENTS#: %d", res.Uuid, res.Username, res.TrainerLvl, res.TrainerExp, res.HaveAr, res.LatTarget, res.LonTarget, len(res.Contents))
 	for _, content := range res.Contents {
 		if content.Method == 2 {
 			getPlayerOutProto := decodeGetPlayerOutProto(content)
 			accountManager.UpdateDetailsFromGame(res.Username, getPlayerOutProto, res.TrainerLvl)
+			log.Debugf("[RAW] [%s] Account '%s' updated with information from Game", res.Uuid, res.Username)
 		}
 	}
 	return
@@ -102,7 +106,7 @@ func rawSender(url string, password string, c *gin.Context, data rawBody) {
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(b))
 
 	if err != nil {
-		log.Warnf("Sender: unable to connect to %s - %s", url, err)
+		log.Warnf("[RAW] Sender: unable to connect to %s - %s", url, err)
 		return
 	}
 	// clone origin headers to the forwarded request
@@ -117,19 +121,19 @@ func rawSender(url string, password string, c *gin.Context, data rawBody) {
 
 	resp, err := rawSendingClient.Do(req)
 	if err != nil {
-		log.Warningf("Webhook: %s", err)
+		log.Warningf("[RAW] Webhook: %s", err)
 		return
 	}
 	_ = resp.Body.Close()
 
-	log.Debugf("Webhook: Response %s", resp.Status)
+	log.Debugf("[RAW] Webhook: Response %s", resp.Status)
 }
 
 func decodeGetPlayerOutProto(content content) *pogo.GetPlayerOutProto {
 	getPlayerProto := &pogo.GetPlayerOutProto{}
 	data, _ := b64.StdEncoding.DecodeString(content.Data)
 	if err := proto.Unmarshal(data, getPlayerProto); err != nil {
-		log.Fatalln("Failed to parse", err)
+		log.Fatalln("Failed to parse GetPlayerOutProto", err)
 	}
 	return getPlayerProto
 }
