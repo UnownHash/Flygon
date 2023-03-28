@@ -178,7 +178,7 @@ func (a *AccountManager) IsValidAccount(username string) (bool, error) {
 		}
 	}
 	log.Errorf("Account with username '%s' not found in accounts", username)
-	return false, errors.New("account " + username + " not found")
+	return false, errors.New("account " + username + " not found in DB")
 }
 
 func (a *AccountManager) MarkWarned(username string) {
