@@ -24,10 +24,10 @@ func LoadAccountManager(am *accounts.AccountManager) {
 }
 
 func StartGin() {
-	gin.SetMode(gin.DebugMode)
-	// TODO change to: gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.ReleaseMode)
+	// gin.SetMode(gin.DebugMode)
 	r := gin.New()
-	//r.SetTrustedProxies(nil)
+	//r.SetTrustedProxies(nil) //TODO actually every proxy is trusted
 	r.Use(ginlogrus.Logger(log.StandardLogger()), gin.Recovery())
 	r.Use(CORSMiddleware())
 

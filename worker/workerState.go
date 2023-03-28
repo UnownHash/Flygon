@@ -6,6 +6,7 @@ import (
 )
 
 type State struct {
+	Uuid      string
 	AreaId    int
 	Username  string
 	StartStep int
@@ -27,7 +28,7 @@ func GetWorkerState(workerId string) *State {
 	defer statesMutex.Unlock()
 
 	if s, found := states[workerId]; !found {
-		newState := &State{}
+		newState := &State{Uuid: workerId}
 		states[workerId] = newState
 		return newState
 	} else {

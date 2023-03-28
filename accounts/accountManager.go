@@ -165,6 +165,31 @@ func (a *AccountManager) ReleaseAccount(username string) {
 	}
 }
 
+func (a *AccountManager) GetAccount(username string) *AccountDetails {
+	for x := range a.accounts {
+		if a.accounts[x].Username == username {
+			if a.inUse[x] == true {
+				account := &a.accounts[x]
+				account.LastSelected = null.IntFrom(time.Now().Unix())
+				return &AccountDetails{
+					Username: account.Username,
+					Password: account.Password,
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func (a *AccountManager) AccountExists(username string) bool {
+	for x := range a.accounts {
+		if a.accounts[x].Username == username {
+			return true
+		}
+	}
+	return false
+}
+
 // IsValidAccount This should be called on every job request - expensive?
 func (a *AccountManager) IsValidAccount(username string) (bool, error) {
 	for x := range a.accounts {
@@ -270,15 +295,6 @@ func (a *AccountManager) MarkTutorialDone(username string) {
 			}
 		}
 	}
-}
-
-func (a *AccountManager) AccountExists(username string) bool {
-	for x := range a.accounts {
-		if a.accounts[x].Username == username {
-			return true
-		}
-	}
-	return false
 }
 
 func (a *AccountManager) SetLevel(username string, level int) {

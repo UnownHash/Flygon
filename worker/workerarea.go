@@ -1,16 +1,15 @@
 package worker
 
 import (
-	"errors"
-	"github.com/jellydator/ttlcache/v3"
-	"sync"
-	"time"
-
 	"Flygon/config"
 	"Flygon/geo"
 	"Flygon/golbatapi"
 	"Flygon/routecalc"
+	"errors"
+	"github.com/jellydator/ttlcache/v3"
 	log "github.com/sirupsen/logrus"
+	"sync"
+	"time"
 )
 
 type WorkerArea struct {
@@ -19,7 +18,6 @@ type WorkerArea struct {
 	TargetWorkerCount int
 	route             []geo.Location
 	pokemonRoute      []geo.Location
-	workers           int
 
 	questFence             geo.Geofence
 	questRoute             []geo.Location
@@ -106,7 +104,6 @@ func NewWorkerArea(id int, name string, workerCount int, route []geo.Location, q
 		TargetWorkerCount:  workerCount,
 		route:              route,
 		pokemonRoute:       route,
-		workers:            workerCount,
 		questFence:         questGeofence,
 		questRoute:         questRoute,
 		questCheckHours:    questCheckHours,
@@ -144,7 +141,7 @@ func (ws *State) AllocateArea() (*WorkerArea, error) {
 
 	for _, a := range workerAreas {
 		totalWorkerInArea := CountWorkersWithArea(a.Id)
-		if totalWorkerInArea >= a.workers {
+		if totalWorkerInArea >= a.TargetWorkerCount {
 			continue
 		}
 
@@ -177,6 +174,10 @@ func (p *WorkerArea) RecalculateRouteParts() {
 	// Calculate route parts
 	numSteps := len(p.pokemonRoute)
 	numWorkers := len(activeWorkers)
+	if numWorkers == 0 {
+		log.Warnf("[WORKERAREA] No active workers to recalculate area")
+		return
+	}
 	stepsPerWorker := numSteps / numWorkers
 	extraSteps := numSteps % numWorkers
 	startStep := 0
@@ -209,7 +210,7 @@ func StartWorkerRoutePartRecalculationScheduler() {
 	go func() {
 		for {
 			<-ticker.C
-			log.Infof("Recaclulate Route Parts If Needed")
+			log.Infof("[WORKERAREA] Recalculate Route Parts If Needed")
 			RecalculateRoutePartsIfNeeded()
 		}
 	}()
@@ -223,7 +224,7 @@ func RecalculateRoutePartsIfNeeded() {
 		for _, ws := range workersInArea {
 			if now-ws.LastSeen > 300 { // 300 seconds = 5 minutes
 				// Recalculate route parts and update worker states
-				log.Warnf("Worker %s not seen last 5 minutes, recalculate route", ws.Username)
+				log.Warnf("[WORKERAREA] [%s] Worker not seen last 5 minutes, recalculate route parts of area", ws.Uuid)
 				p.RecalculateRouteParts()
 				break
 			}
@@ -234,18 +235,6 @@ func RecalculateRoutePartsIfNeeded() {
 func (p *WorkerArea) GetRouteLocationOfStep(stepNo int) geo.Location {
 	return p.route[stepNo]
 }
-
-//func (p *WorkerArea) GetWorkers() map[string]WorkerMode {
-//	r := make(map[string]WorkerMode)
-//	for i := 0; i < p.TargetWorkerCount && i < len(p.workers); i++ {
-//		worker := p.workers[i]
-//		if worker != nil {
-//			r[worker.GetWorkerName()] = worker
-//		}
-//	}
-//
-//	return r
-//}
 
 // GetPokestopStatus Returns a cell object for given cell id, creates a new one if not seen before
 func (p *WorkerArea) GetPokestopStatus(fortId string) *PokestopQuestInfo {
@@ -292,42 +281,10 @@ func (p *WorkerArea) StartQuesting() bool {
 	p.clearQuestCache()
 
 	if len(p.questRoute) > 0 {
-		//for x := 0; x < p.TargetWorkerCount && x < len(p.workers); x++ {
-		//	if p.workers[x] != nil {
-		//		p.workers[x].SwitchToQuestMode()
-		//	}
-		//}
 		return true
 	}
 
 	return false
-}
-
-// AdjustRoute allows a hot reload of the route
-func (p *WorkerArea) AdjustRoute(newRoute []geo.Location) {
-	p.route = newRoute
-	//TODO recalculate route
-}
-
-func (p *WorkerArea) AdjustQuestFence(newQuestFence geo.Geofence) {
-	p.questFence = newQuestFence
-}
-
-// AdjustWorkers allows a hot recalculation of worker numbers
-func (p *WorkerArea) AdjustWorkers(newWorkers int) {
-	if p.TargetWorkerCount == newWorkers {
-		return
-	}
-	p.TargetWorkerCount = newWorkers
-	//TODO recalculate workers
-}
-
-func (p *WorkerArea) ActiveWorkerCount() int {
-	currentWorkers := 0
-	for n := 0; n < p.TargetWorkerCount && n < p.workers; n++ {
-		currentWorkers++
-	}
-	return currentWorkers
 }
 
 func (p *WorkerArea) RouteLength() int {
@@ -353,6 +310,28 @@ func (p *WorkerArea) calculateKojiQuestRoute() {
 		p.questRoute = shortRoute
 	}
 	log.Errorf("Unable to calculate fast route - error %s", err)
+}
+
+// AdjustRoute allows a hot reload of the route
+func (p *WorkerArea) AdjustRoute(newRoute []geo.Location) {
+	p.route = newRoute
+	p.RecalculateRouteParts()
+}
+
+func (p *WorkerArea) AdjustQuestFence(newQuestFence geo.Geofence) {
+	p.questFence = newQuestFence
+}
+
+// AdjustWorkers allows a hot recalculation of worker numbers
+func (p *WorkerArea) AdjustWorkers(newWorkers int) {
+	if p.TargetWorkerCount == newWorkers {
+		return
+	}
+	p.TargetWorkerCount = newWorkers
+	if newWorkers <= p.TargetWorkerCount {
+		log.Debugf("[WORKERAREA] Worker amount was reduced we have to recalculate")
+		//TODO if we reduce worker amount, we need to recalculate route parts and remove worker
+	}
 }
 
 func (p *WorkerArea) AdjustQuestRoute(route []geo.Location) {

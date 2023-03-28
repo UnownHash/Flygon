@@ -66,6 +66,8 @@ func Raw(c *gin.Context) {
 		return
 	}
 	respondWithOk(c)
+	//TODO don't block the response - we should answer and send OK
+	// it seems that gin does not respond here, it waits for full method call, could that be?
 
 	// no need to remove Encounter if trainerlvl below 30
 	// -> Golbat is already filtering that data
@@ -82,10 +84,10 @@ func Raw(c *gin.Context) {
 		accountManager.SetLevel(res.Username, res.TrainerLvl)
 	}
 	//body, _ := ioutil.ReadAll(c.Request.Body)
-	//log.Printf("RAW: UUID: %s - USERNAME: %s - LVL: %d - EXP: %d - HAVE-AR: %b - AT: %f,%f- CONTENTS#: %d", res.Uuid, res.Username, res.TrainerLvl, res.TrainerExp, res.HaveAr, res.LatTarget, res.LonTarget, len(res.Contents))
-	for _, content := range res.Contents {
-		if content.Method == 2 {
-			getPlayerOutProto := decodeGetPlayerOutProto(content)
+
+	for _, rawContent := range res.Contents {
+		if rawContent.Method == 2 {
+			getPlayerOutProto := decodeGetPlayerOutProto(rawContent)
 			accountManager.UpdateDetailsFromGame(res.Username, getPlayerOutProto, res.TrainerLvl)
 			log.Debugf("[RAW] [%s] Account '%s' updated with information from Game", res.Uuid, res.Username)
 		}

@@ -25,8 +25,8 @@ CREATE TABLE `area`
     `pokemon_mode_route`         text DEFAULT NULL,
     `fort_mode_workers`          int(10) unsigned NOT NULL DEFAULT 0,
     `fort_mode_route`            text DEFAULT NULL,
-    `quest_mode_workers`         int(10) unsigned NOT NULL DEFAULT 0,
     `enable_quests`              tinyint(1) NOT NULL DEFAULT 0,
+    `quest_mode_workers`         int(10) unsigned NOT NULL DEFAULT 0,
     `quest_mode_route`           text DEFAULT NULL,
     `quest_mode_hours`           text DEFAULT NULL,
     PRIMARY KEY (`id`),
@@ -42,4 +42,17 @@ CREATE TABLE `quest_check`
     PRIMARY KEY (`lat`, `lon`),
     KEY         `area_id` (`area_id`),
     CONSTRAINT `quest_check_ix` FOREIGN KEY (`area_id`) REFERENCES `area` (`id`)
+);
+
+CREATE TABLE `stats_workers` (
+    `datetime` datetime NOT NULL,
+    `controller_worker` varchar(255) NOT NULL,
+    `device_name` varchar(255) DEFAULT NULL,
+    `loc_count` int(11) DEFAULT NULL,
+    `loc_success` int(11) DEFAULT NULL,
+    `mons_seen` int(11) DEFAULT NULL,
+    `mons_enc` int(11) DEFAULT NULL,
+    `stops` int(11) DEFAULT NULL,
+    `quests` int(11) DEFAULT NULL,
+    PRIMARY KEY (`datetime`,`controller_worker`)
 );

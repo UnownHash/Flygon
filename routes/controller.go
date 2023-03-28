@@ -2,10 +2,12 @@ package routes
 
 import (
 	"Flygon/accounts"
+	"Flygon/config"
 	"Flygon/worker"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -44,6 +46,8 @@ func (a MitmAction) String() string {
 	}
 	return "unknown"
 }
+
+var lastLogin = sync.Map{}
 
 func Controller(c *gin.Context) {
 	var req ControllerBody
@@ -86,9 +90,9 @@ func handleInit(c *gin.Context, req ControllerBody, workerState *worker.State) {
 	log.Debugf("[CONTROLLER] [%s] Init", req.Uuid)
 	assigned := false
 	if a, err := workerState.AllocateArea(); err != nil {
-		log.Errorf("Error happened on allocating area %s", err.Error())
+		log.Errorf("[CONTROLLER] [%s] Error happened on allocating area: %s", req.Uuid, err.Error())
 	} else {
-		log.Infof("Allocated area %d:%s to worker %s", workerState.AreaId, a.Name, req.Uuid)
+		log.Infof("[CONTROLLER] [%s] Allocated area %d:%s to worker", req.Uuid, workerState.AreaId, a.Name)
 		assigned = true
 	}
 	respondWithData(c, &map[string]any{
@@ -109,18 +113,40 @@ func handleHeartbeat(c *gin.Context, req ControllerBody, workerState *worker.Sta
 
 func handleGetAccount(c *gin.Context, req ControllerBody, workerState *worker.State) {
 	log.Debugf("[CONTROLLER] [%s] GetAccount", req.Uuid)
-	account := accountManager.GetNextAccount(accounts.SelectLevel30)
+	var account = &accounts.AccountDetails{}
+	if workerState.Username != "" {
+		// reuse same account if possible -> to reuse auth token
+		if valid, err := accountManager.IsValidAccount(req.Username); err == nil && valid {
+			account = accountManager.GetAccount(req.Username)
+		}
+	} else {
+		account = accountManager.GetNextAccount(accounts.SelectLevel30)
+	}
+
 	if account == nil {
 		respondWithError(c, NoAccountLeft)
 		return
 	}
-	// TODO add login limit
 	workerState.Username = account.Username
+
+	if loginDelay := config.Config.General.LoginDelay; loginDelay > 0 {
+		host := c.RemoteIP()
+		now := time.Now().Unix()
+		value, ok := lastLogin.Load(host)
+		if ok && value.(int64)+int64(loginDelay) > now {
+			c.Header("Retry-After", "0")
+			respondWithError(c, LoginLimitExceeded)
+			// return with 429, retryAfter
+		}
+		lastLogin.Store(host, now)
+	}
+
 	a, err := workerState.GetAllocatedArea()
 	if err != nil {
 		respondWithError(c, InstanceNotFound)
 		return
 	}
+	log.Debugf("[CONTROLLER] [%s] Recalculate route parts because of GetAccount", workerState.Username)
 	a.RecalculateRouteParts()
 	data := map[string]any{
 		"username": account.Username,

@@ -4,7 +4,6 @@ import (
 	"os"
 	"time"
 
-	"Flygon/accounts"
 	"Flygon/config"
 	"Flygon/db"
 	"Flygon/geo"
@@ -12,8 +11,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
 )
-
-var accountsManager *accounts.AccountManager
 
 var naughtyDetails db.DbDetails
 
@@ -165,7 +162,7 @@ func ReloadAreas(dbDetails db.DbDetails) {
 
 	for _, current := range currentAreas {
 		if !slices.Contains(checked, current.Id) {
-			// Close workers
+			// Close workersAssigned
 			log.Infof("RELOAD: Shutting down area %d / %s", current.Id, current.Name)
 
 			current.AdjustWorkers(0)
