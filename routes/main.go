@@ -5,10 +5,11 @@ import (
 	"Flygon/config"
 	"Flygon/db"
 	"fmt"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	ginlogrus "github.com/toorop/gin-logrus"
-	"net/http"
 )
 
 var dbDetails *db.DbDetails
@@ -91,7 +92,7 @@ func ApiTokenMiddleware() gin.HandlerFunc {
 		authHeader := c.Request.Header.Get("X-FlyGOn-Secret")
 		if config.Config.General.ApiSecret != "" {
 			if authHeader != config.Config.General.ApiSecret {
-				log.Errorf("ClearQuests: Incorrect authorisation received (%s)", authHeader)
+				log.Errorf("Incorrect authorisation received (%s)", authHeader)
 				c.String(http.StatusUnauthorized, "Unauthorised")
 				c.Abort()
 				return
@@ -106,7 +107,7 @@ func BearerTokenMiddleware() gin.HandlerFunc {
 		authHeader := c.Request.Header.Get("Authorization")
 		if config.Config.General.BearerToken != "" {
 			if authHeader != "Bearer "+config.Config.General.BearerToken {
-				log.Errorf("ClearQuests: Incorrect authorisation received (%s)", authHeader)
+				log.Errorf("Incorrect authorisation received (%s)", authHeader)
 				c.String(http.StatusUnauthorized, "Unauthorised")
 				c.Abort()
 				return

@@ -5,9 +5,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"gopkg.in/guregu/null.v4"
 	"strconv"
 	"strings"
+
+	"gopkg.in/guregu/null.v4"
 )
 
 type Area struct {
@@ -56,8 +57,8 @@ func GetAreaRecord(db DbDetails, id int) (*Area, error) {
 }
 
 func CreateArea(db DbDetails, area Area) (int64, error) {
-	res, err := db.FlygonDb.NamedExec("INSERT INTO area (name, pokemon_mode_workers, pokemon_mode_route, fort_mode_workers, fort_mode_route, quest_mode_workers, quest_mode_hours, quest_mode_route, quest_mode_max_login_queue, geofence, enable_quests)"+
-		"VALUES (:name, :pokemon_mode_workers, :pokemon_mode_route, :fort_mode_workers, :fort_mode_route, :quest_mode_workers, :quest_mode_hours, :quest_mode_route, :quest_mode_max_login_queue, :geofence, :enable_quests)",
+	res, err := db.FlygonDb.NamedExec("INSERT INTO area (name, pokemon_mode_workers, pokemon_mode_route, fort_mode_workers, fort_mode_route, quest_mode_workers, quest_mode_hours, quest_mode_route, geofence, enable_quests)"+
+		"VALUES (:name, :pokemon_mode_workers, :pokemon_mode_route, :fort_mode_workers, :fort_mode_route, :quest_mode_workers, :quest_mode_hours, :quest_mode_route, :geofence, :enable_quests)",
 		area)
 
 	if err != nil {
@@ -77,7 +78,6 @@ func UpdateArea(db DbDetails, area Area) (int64, error) {
 		"quest_mode_workers = :quest_mode_workers, "+
 		"quest_mode_hours = :quest_mode_hours, "+
 		"quest_mode_route = :quest_mode_route, "+
-		"quest_mode_max_login_queue = :quest_mode_max_login_queue, "+
 		"geofence = :geofence, "+
 		"enable_quests = :enable_quests "+
 		"WHERE id = :id",
