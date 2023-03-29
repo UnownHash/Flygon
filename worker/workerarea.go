@@ -52,6 +52,8 @@ type PokestopScanInfo struct {
 const Quest_Layer_AR = 0
 const Quest_Layer_NoAr = 1
 
+var workerUnseen = int64(config.Config.Worker.RoutePartTimeout)
+
 var ErrNoAreaNeedsWorkers = errors.New("No area needs workers")
 var ErrNoAreaAllocated = errors.New("No area allocated to worker")
 
@@ -166,8 +168,12 @@ func (p *WorkerArea) RecalculateRouteParts() {
 	var activeWorkers []*State
 	now := time.Now().Unix()
 	for _, ws := range workersInArea {
-		if now-ws.LastSeen <= 300 { // 300 seconds = 5 minutes
+		if now-ws.LastSeen <= workerUnseen {
 			activeWorkers = append(activeWorkers, ws)
+		} else {
+			ws.Step = 0
+			ws.StartStep = 0
+			ws.EndStep = 0
 		}
 	}
 
@@ -222,7 +228,7 @@ func RecalculateRoutePartsIfNeeded() {
 		// Check if any workers have not been seen for more than 5 minutes
 		now := time.Now().Unix()
 		for _, ws := range workersInArea {
-			if now-ws.LastSeen > 300 { // 300 seconds = 5 minutes
+			if now-ws.LastSeen > workerUnseen {
 				// Recalculate route parts and update worker states
 				log.Warnf("[WORKERAREA] [%s] Worker not seen last 5 minutes, recalculate route parts of area", ws.Uuid)
 				p.RecalculateRouteParts()

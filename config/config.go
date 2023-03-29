@@ -3,6 +3,7 @@ package config
 type configDefinition struct {
 	General    generalDefinition   `toml:"general"`
 	Processors processorDefinition `toml:"processors"`
+	Worker     workerDefinition    `toml:"worker"`
 	Db         DbDefinition        `toml:"db"`
 	Sentry     sentry              `toml:"sentry"`
 	Pyroscope  pyroscope           `toml:"pyroscope"`
@@ -16,11 +17,9 @@ type generalDefinition struct {
 	Port                int    `toml:"port"`
 	ApiSecret           string `tom:"api_secret"`
 	BearerToken         string `tom:"bearer_token"`
-	LoginDelay          int    `toml:"login_delay"`
 	RouteCalcUrl        string `toml:"routecalc_url"`
 	KojiUrl             string `toml:"koji_url"`
 	KojiBearerToken     string `toml:"koji_bearer_token"`
-	DisableFortLookup   bool   `toml:"disable_fort_lookup"`
 }
 
 type processorDefinition struct {
@@ -28,6 +27,11 @@ type processorDefinition struct {
 	GolbatRawBearer string   `toml:"golbat_raw_bearer"`
 	GolbatApiSecret string   `toml:"golbat_api_secret"`
 	RawEndpoints    []string `toml:"raw_endpoints"`
+}
+
+type workerDefinition struct {
+	LoginDelay       int `toml:"login_delay"`
+	RoutePartTimeout int `toml:"route_part_timeout"`
 }
 
 type DbDefinition struct {
@@ -62,7 +66,10 @@ var Config = configDefinition{
 		SaveLogs:            true,
 		Host:                "0.0.0.0",
 		Port:                9002,
-		LoginDelay:          20,
+	},
+	Worker: workerDefinition{
+		RoutePartTimeout: 150,
+		LoginDelay:       20,
 	},
 	Sentry: sentry{
 		SampleRate:       1.0,

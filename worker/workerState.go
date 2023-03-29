@@ -74,6 +74,15 @@ func GetWorkersWithArea(areaId int) []*State {
 	return workers
 }
 
+func GetWorkers() (results []*State) {
+	statesMutex.Lock()
+	for _, v := range states {
+		results = append(results, v)
+	}
+	statesMutex.Unlock()
+	return results
+}
+
 func (ws *State) ResetUsername() {
 	ws.Username = ""
 }

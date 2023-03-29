@@ -135,7 +135,7 @@ func handleGetAccount(c *gin.Context, req ControllerBody, workerState *worker.St
 	}
 	workerState.Username = account.Username
 	host := c.RemoteIP()
-	if loginDelay := config.Config.General.LoginDelay; loginDelay > 0 {
+	if loginDelay := config.Config.Worker.LoginDelay; loginDelay > 0 {
 		now := time.Now().Unix()
 		value, ok := lastLogin.Load(host)
 		if ok {
@@ -160,11 +160,13 @@ func handleGetAccount(c *gin.Context, req ControllerBody, workerState *worker.St
 
 func handleGetJob(c *gin.Context, req ControllerBody, workerState *worker.State) {
 	log.Debugf("[CONTROLLER] [%s] GetJob From Account: %s", req.Uuid, req.Username)
+
 	isValid, err := accountManager.IsValidAccount(req.Username)
 	if err != nil {
 		respondWithError(c, AccountNotFound)
+		return
 	}
-	if !isValid {
+	if !isValid || workerState.Username != req.Username {
 		workerState.ResetUsername()
 		respondWithData(c, &map[string]any{
 			"action":    SwitchAccount.String(),

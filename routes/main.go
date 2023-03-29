@@ -52,6 +52,8 @@ func StartGin() {
 	protectedApi.DELETE("/areas/:area_id", DeleteArea)
 	protectedApi.PATCH("/areas/:area_id", PatchArea)
 
+	protectedApi.GET("/workers/", GetWorkers)
+
 	protectedApi.GET("/accounts/", GetAccounts)
 	protectedApi.GET("/accounts/stats", GetAccountsStats)
 	protectedApi.GET("/accounts/level-stats", GetLevelStats)
