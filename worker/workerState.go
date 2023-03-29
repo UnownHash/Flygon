@@ -28,7 +28,7 @@ func GetWorkerState(workerId string) *State {
 	defer statesMutex.Unlock()
 
 	if s, found := states[workerId]; !found {
-		newState := &State{Uuid: workerId}
+		newState := &State{Uuid: workerId, LastSeen: time.Now().Unix()}
 		states[workerId] = newState
 		return newState
 	} else {
