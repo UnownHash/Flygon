@@ -1,5 +1,7 @@
 # Flygon
 
+[![Discord](https://img.shields.io/discord/1083029607919386654.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/Vjze47qchG)
+
 Flygon is an experimental device controller. It includes a basic proof of concept Mode and Device Manager.
 
 ## Support and discussion
