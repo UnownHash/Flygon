@@ -66,35 +66,31 @@ func Raw(c *gin.Context) {
 		return
 	}
 	respondWithOk(c)
-
-	//TODO don't block the response - we should answer and send OK
-	// it seems that gin does not respond here, it waits for full method call, could that be?
-	// http://marcio.io/2015/07/handling-1-million-requests-per-minute-with-golang/
-
-	// no need to remove Encounter if trainerlvl below 30
-	// -> Golbat is already filtering that data
-	for _, endpoint := range rawEndpoints {
-		password := endpoint.BearerToken
-		destinationUrl := endpoint.Url
-		go rawSender(destinationUrl, password, c, res)
-	}
-
-	host := c.RemoteIP()
-	ws := worker.GetWorkerState(res.Uuid)
-	ws.Touch(host)
-	if res.TrainerLvl > 0 {
-		accountManager.SetLevel(res.Username, res.TrainerLvl)
-	}
-	//body, _ := ioutil.ReadAll(c.Request.Body)
-
-	for _, rawContent := range res.Contents {
-		if rawContent.Method == 2 {
-			getPlayerOutProto := decodeGetPlayerOutProto(rawContent)
-			accountManager.UpdateDetailsFromGame(res.Username, getPlayerOutProto, res.TrainerLvl)
-			log.Debugf("[RAW] [%s] Account '%s' updated with information from Game", res.Uuid, res.Username)
+	go func() {
+		// no need to remove Encounter if trainerlvl below 30
+		// -> Golbat is already filtering that data
+		for _, endpoint := range rawEndpoints {
+			password := endpoint.BearerToken
+			destinationUrl := endpoint.Url
+			go rawSender(destinationUrl, password, c, res)
 		}
-	}
-	return
+
+		host := c.RemoteIP()
+		ws := worker.GetWorkerState(res.Uuid)
+		ws.Touch(host)
+		if res.TrainerLvl > 0 {
+			accountManager.SetLevel(res.Username, res.TrainerLvl)
+		}
+		//body, _ := ioutil.ReadAll(c.Request.Body)
+
+		for _, rawContent := range res.Contents {
+			if rawContent.Method == 2 {
+				getPlayerOutProto := decodeGetPlayerOutProto(rawContent)
+				accountManager.UpdateDetailsFromGame(res.Username, getPlayerOutProto, res.TrainerLvl)
+				log.Debugf("[RAW] [%s] Account '%s' updated with information from Game", res.Uuid, res.Username)
+			}
+		}
+	}()
 }
 
 func SetRawEndpoints(endpoints []RawEndpoint) {

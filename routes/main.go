@@ -9,7 +9,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
-	ginlogrus "github.com/toorop/gin-logrus"
 )
 
 var dbDetails *db.DbDetails
@@ -28,7 +27,8 @@ func StartGin() {
 	// gin.SetMode(gin.DebugMode)
 	r := gin.New()
 	//r.SetTrustedProxies(nil) //TODO actually every proxy is trusted
-	r.Use(ginlogrus.Logger(log.StandardLogger()), gin.Recovery())
+	//r.Use(ginlogrus.Logger(log.StandardLogger()), gin.Recovery()) // don't use
+	r.Use(gin.Recovery())
 	r.Use(CORSMiddleware())
 
 	protectedDevice := r.Group("/")
