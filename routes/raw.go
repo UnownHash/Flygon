@@ -66,8 +66,10 @@ func Raw(c *gin.Context) {
 		return
 	}
 	respondWithOk(c)
+
 	//TODO don't block the response - we should answer and send OK
 	// it seems that gin does not respond here, it waits for full method call, could that be?
+	// http://marcio.io/2015/07/handling-1-million-requests-per-minute-with-golang/
 
 	// no need to remove Encounter if trainerlvl below 30
 	// -> Golbat is already filtering that data

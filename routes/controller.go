@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -106,18 +107,23 @@ func handleInit(c *gin.Context, req ControllerBody, workerState *worker.State) {
 
 func handleHeartbeat(c *gin.Context, req ControllerBody, workerState *worker.State) {
 	log.Debugf("[CONTROLLER] [%s] Heartbeat", req.Uuid)
-	workerState.LastSeen = time.Now().Unix()
+	workerState.Touch(c.RemoteIP())
 	respondWithOk(c)
 	return
 }
 
 func handleGetAccount(c *gin.Context, req ControllerBody, workerState *worker.State) {
 	log.Debugf("[CONTROLLER] [%s] GetAccount", req.Uuid)
+	a, err := workerState.GetAllocatedArea()
+	if err != nil {
+		respondWithError(c, InstanceNotFound)
+		return
+	}
 	var account = &accounts.AccountDetails{}
 	if workerState.Username != "" {
 		// reuse same account if possible -> to reuse auth token
-		if valid, err := accountManager.IsValidAccount(req.Username); err == nil && valid {
-			account = accountManager.GetAccount(req.Username)
+		if valid, err := accountManager.IsValidAccount(workerState.Username); err == nil && valid {
+			account = accountManager.GetAccount(workerState.Username)
 		}
 	} else {
 		account = accountManager.GetNextAccount(accounts.SelectLevel30)
@@ -128,24 +134,20 @@ func handleGetAccount(c *gin.Context, req ControllerBody, workerState *worker.St
 		return
 	}
 	workerState.Username = account.Username
-
+	host := c.RemoteIP()
 	if loginDelay := config.Config.General.LoginDelay; loginDelay > 0 {
-		host := c.RemoteIP()
 		now := time.Now().Unix()
 		value, ok := lastLogin.Load(host)
-		if ok && value.(int64)+int64(loginDelay) > now {
-			c.Header("Retry-After", "0")
-			respondWithError(c, LoginLimitExceeded)
-			// return with 429, retryAfter
+		if ok {
+			if remainingTime := value.(int64) + int64(loginDelay) - now; remainingTime > 0 {
+				c.Header("Retry-After", strconv.FormatInt(remainingTime, 10))
+				respondWithError(c, LoginLimitExceeded)
+				return
+			}
 		}
 		lastLogin.Store(host, now)
 	}
 
-	a, err := workerState.GetAllocatedArea()
-	if err != nil {
-		respondWithError(c, InstanceNotFound)
-		return
-	}
 	log.Debugf("[CONTROLLER] [%s] Recalculate route parts because of GetAccount", workerState.Username)
 	a.RecalculateRouteParts()
 	data := map[string]any{
@@ -173,7 +175,7 @@ func handleGetJob(c *gin.Context, req ControllerBody, workerState *worker.State)
 	}
 	workerState.Step++
 	if workerState.Step > workerState.EndStep {
-		log.Infof("Worker finished route")
+		log.Infof("[CONTROLLER] [%s] Worker finished route", req.Username)
 		workerState.Step = workerState.StartStep
 	}
 	wa := worker.GetWorkerArea(workerState.AreaId)
