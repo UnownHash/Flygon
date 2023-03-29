@@ -38,13 +38,13 @@ services:
     container_name: admin
     restart: unless-stopped
     environment:
-      GENERAL_USERNAME: admin
-      GENERAL_PASSWORD: password
+      ADMIN_GENERAL_USERNAME: admin
+      ADMIN_GENERAL_PASSWORD: password
 
-      FLYGON_API_ENDPOINT: http://flygon:9002
-      FLYGON_API_SECRET: secret
+      ADMIN_FLYGON_API_ENDPOINT: http://flygon:9002
+      ADMIN_FLYGON_API_SECRET: secret
 
-      GOLBAT_API_ENDPOINT: http://golbat:9001
-      GOLBAT_API_SECRET: secret
+      ADMIN_GOLBAT_API_ENDPOINT: http://golbat:9001
+      ADMIN_GOLBAT_API_SECRET: secret
     ports:
       - "9003:9003"
