@@ -11,7 +11,6 @@ RUN CGO_ENABLED=0 go build -o /go/bin/flygon
 FROM gcr.io/distroless/static-debian11 as runner
 COPY --from=build /go/bin/flygon /flygon/
 COPY /sql /flygon/sql
-COPY /cache /flygon/cache
 COPY /logs /flygon/logs
 
 WORKDIR /flygon
