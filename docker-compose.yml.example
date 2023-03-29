@@ -6,7 +6,7 @@ services:
     restart: unless-stopped
     volumes:
       - type: bind
-        source: ./config.toml
+        source: ./flygon_config.toml
         target: /flygon/config.toml
       # optional volumes if you want to have access to logs
       # comment if not needed
@@ -21,7 +21,7 @@ services:
     restart: unless-stopped
     volumes:
       - type: bind
-        source: ./config.toml
+        source: ./golbat_config.toml
         target: /golbat/config.toml
       # optional volumes if you want to have access to logs and persist cache
       # comment if not needed
