@@ -15,16 +15,20 @@ At this time this is likely to be mostly development discussion.
 
 # Instructions (Recommended)
 1. `git clone https://github.com/UnownHash/Flygon.git flygon && cd flygon`
-2. `go build`
-3. `pm2 start ./flygon --name flygon -o "/dev/null"`
-4. `cd ..`
+2. `cp config.toml.example config.toml`
+3. modify it as you want
+4. `go build`
+5. `pm2 start ./flygon --name flygon -o "/dev/null"`
+6. `cd ..`
 
 ## Optional
 1. Golbat
    1. `git clone https://github.com/UnownHash/Golbat.git golbat && cd golbat`
-   2. `go build`
-   3. `pm2 start ./golbat --name golbat -o "/dev/null"`
-   4. `cd ..`
+   2. `cp config.toml.example config.toml`
+   3. modify it as you want
+   4. `go build`
+   5. `pm2 start ./golbat --name golbat -o "/dev/null"`
+   6. `cd ..`
 2. Admin
    1. TODO
 
