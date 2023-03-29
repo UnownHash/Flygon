@@ -13,7 +13,7 @@ At this time this is likely to be mostly development discussion.
 - [Golbat](https://github.com/UnownHash/Golbat) (optional)
 - [Flygon-Admin](https://github.com/UnownHash/Flygon-Admin) (optional)
 
-# Instructions
+# Instructions (Recommended)
 1. `git clone https://github.com/UnownHash/Flygon.git flygon && cd flygon`
 2. `go build`
 3. `pm2 start ./flygon --name flygon -o "/dev/null"`
@@ -24,6 +24,7 @@ At this time this is likely to be mostly development discussion.
    1. `git clone https://github.com/UnownHash/Golbat.git golbat && cd golbat`
    2. `go build`
    3. `pm2 start ./golbat --name golbat -o "/dev/null"`
+   4. `cd ..`
 2. Admin
    1. TODO
 
