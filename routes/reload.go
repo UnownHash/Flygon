@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"Flygon/util"
-	"Flygon/worker"
+	"flygon/util"
+	"flygon/worker"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )

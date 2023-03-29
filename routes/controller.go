@@ -1,9 +1,9 @@
 package routes
 
 import (
-	"Flygon/accounts"
-	"Flygon/config"
-	"Flygon/worker"
+	"flygon/accounts"
+	"flygon/config"
+	"flygon/worker"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"net/http"

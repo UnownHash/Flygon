@@ -1,11 +1,11 @@
 package worker
 
 import (
-	"Flygon/config"
-	"Flygon/geo"
-	"Flygon/golbatapi"
-	"Flygon/routecalc"
 	"errors"
+	"flygon/config"
+	"flygon/geo"
+	"flygon/golbatapi"
+	"flygon/routecalc"
 	"github.com/jellydator/ttlcache/v3"
 	log "github.com/sirupsen/logrus"
 	"sync"

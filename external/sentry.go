@@ -1,7 +1,7 @@
 package external
 
 import (
-	"Flygon/config"
+	"flygon/config"
 	"github.com/getsentry/sentry-go"
 	log "github.com/sirupsen/logrus"
 )

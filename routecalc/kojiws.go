@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"Flygon/geo"
-	"Flygon/util"
+	"flygon/geo"
+	"flygon/util"
 	log "github.com/sirupsen/logrus"
 )
 

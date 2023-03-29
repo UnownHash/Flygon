@@ -1,8 +1,8 @@
 package db
 
 import (
-	"Flygon/pogo"
 	"database/sql"
+	"flygon/pogo"
 	"gopkg.in/guregu/null.v4"
 )
 

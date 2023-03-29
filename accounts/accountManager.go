@@ -1,9 +1,9 @@
 package accounts
 
 import (
-	"Flygon/db"
-	"Flygon/pogo"
 	"errors"
+	"flygon/db"
+	"flygon/pogo"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/guregu/null.v4"
 	"sync"

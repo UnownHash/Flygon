@@ -1,7 +1,7 @@
 package external
 
 import (
-	"Flygon/config"
+	"flygon/config"
 	"github.com/pyroscope-io/client/pyroscope"
 	log "github.com/sirupsen/logrus"
 	"os"

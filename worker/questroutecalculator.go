@@ -3,9 +3,9 @@ package worker
 import (
 	"time"
 
-	"Flygon/db"
-	"Flygon/routecalc"
-	"Flygon/tz"
+	"flygon/db"
+	"flygon/routecalc"
+	"flygon/tz"
 	log "github.com/sirupsen/logrus"
 )
 

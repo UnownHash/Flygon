@@ -4,9 +4,9 @@ import (
 	"os"
 	"time"
 
-	"Flygon/config"
-	"Flygon/db"
-	"Flygon/geo"
+	"flygon/config"
+	"flygon/db"
+	"flygon/geo"
 	"github.com/go-co-op/gocron"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"

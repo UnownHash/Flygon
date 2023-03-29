@@ -1,9 +1,9 @@
 package db
 
 import (
-	"Flygon/geo"
 	"database/sql"
 	"errors"
+	"flygon/geo"
 	"fmt"
 	"strconv"
 	"strings"

@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"Flygon/db"
-	"Flygon/geo"
-	"Flygon/worker"
+	"flygon/db"
+	"flygon/geo"
+	"flygon/worker"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/guregu/null.v4"

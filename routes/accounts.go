@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"Flygon/accounts"
-	"Flygon/db"
+	"flygon/accounts"
+	"flygon/db"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"

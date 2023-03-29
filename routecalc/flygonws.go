@@ -1,10 +1,10 @@
 package routecalc
 
 import (
-	"Flygon/geo"
 	"bytes"
 	"encoding/json"
 	"errors"
+	"flygon/geo"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"

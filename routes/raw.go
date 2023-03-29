@@ -1,12 +1,12 @@
 package routes
 
 import (
-	"Flygon/pogo"
-	"Flygon/worker"
 	"bytes"
 	"crypto/tls"
 	b64 "encoding/base64"
 	"encoding/json"
+	"flygon/pogo"
+	"flygon/worker"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"

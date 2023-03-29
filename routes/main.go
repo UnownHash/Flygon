@@ -1,9 +1,9 @@
 package routes
 
 import (
-	"Flygon/accounts"
-	"Flygon/config"
-	"Flygon/db"
+	"flygon/accounts"
+	"flygon/config"
+	"flygon/db"
 	"fmt"
 	"net/http"
 

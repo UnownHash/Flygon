@@ -6,8 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"Flygon/geo"
-	"Flygon/util"
+	"flygon/geo"
+	"flygon/util"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )

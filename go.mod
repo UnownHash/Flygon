@@ -1,4 +1,4 @@
-module Flygon
+module flygon
 
 go 1.18
 
