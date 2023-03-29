@@ -60,24 +60,4 @@ type pyroscope struct {
 	BlockProfileRate     int    `toml:"block_profile_rate"`
 }
 
-var Config = configDefinition{
-	General: generalDefinition{
-		WorkerStatsInterval: 5,
-		SaveLogs:            true,
-		Host:                "0.0.0.0",
-		Port:                9002,
-	},
-	Worker: workerDefinition{
-		RoutePartTimeout: 150,
-		LoginDelay:       20,
-	},
-	Sentry: sentry{
-		SampleRate:       1.0,
-		TracesSampleRate: 1.0,
-	},
-	Pyroscope: pyroscope{
-		ApplicationName:      "flygon",
-		MutexProfileFraction: 5,
-		BlockProfileRate:     5,
-	},
-}
+var Config configDefinition

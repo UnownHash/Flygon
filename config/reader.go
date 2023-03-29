@@ -1,28 +1,45 @@
 package config
 
 import (
-	"github.com/pelletier/go-toml/v2"
-	"io/ioutil"
-	"os"
+	"fmt"
+	"github.com/spf13/viper"
+	"strings"
 )
 
 func ReadConfig() {
-	tomlFile, err := os.Open("config.toml")
-	// if we os.Open returns an error then handle it
-	if err != nil {
-		panic(err)
+	viper.SetConfigName("config")
+	viper.SetConfigType("toml")
+	viper.AddConfigPath(".")
+
+	// configure how to read environment variables
+	viper.SetEnvPrefix("flygon")
+	viper.AutomaticEnv()
+	stringReplacer := strings.NewReplacer(".", "_")
+	viper.SetEnvKeyReplacer(stringReplacer)
+
+	setDefaults()
+	readConfigErr := viper.ReadInConfig()
+	if readConfigErr != nil {
+		panic(fmt.Errorf("failed to read config file: %w", readConfigErr))
 	}
-	// defer the closing of our tomlFile so that we can parse it later on
-	defer tomlFile.Close()
-
-	byteValue, _ := ioutil.ReadAll(tomlFile)
-
-	// Provide a default value
-	Config.General.SaveLogs = true
-	Config.Db.MaxPool = 50
-
-	err = toml.Unmarshal([]byte(byteValue), &Config)
-	if err != nil {
-		panic(err)
+	unmarshalErr := viper.Unmarshal(&Config)
+	if unmarshalErr != nil {
+		panic(fmt.Errorf("failed to parse config file: %w", unmarshalErr))
 	}
+}
+
+func setDefaults() {
+	viper.SetDefault("general.worker_stats_interval", 5)
+	viper.SetDefault("general.save_logs", true)
+	viper.SetDefault("general.host", "0.0.0.0")
+	viper.SetDefault("general.port", 9002)
+
+	viper.SetDefault("worker.route_part_timeout", 150)
+	viper.SetDefault("worker.login_delay", 20)
+	viper.SetDefault("sentry.sample_rate", 1.0)
+	viper.SetDefault("sentry.traces_sample_rate", 1.0)
+	viper.SetDefault("pyroscope.application_name", "flygon")
+	viper.SetDefault("pyroscope.mutex_profile_fraction", 5)
+	viper.SetDefault("pyroscope.block_profile_rate", 5)
+
 }
