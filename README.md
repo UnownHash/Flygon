@@ -23,6 +23,11 @@ At this time this is likely to be mostly development discussion.
 1. `go build`
 2. `pm2 start ./flygon --name flygon -o "/dev/null"`
 
+## Updating
+1. `git pull`
+2. `go build`
+3. `pm2 restart flygon`
+
 # Run in docker (Full Stack)
 1. `wget -O docker-compose.yml https://raw.githubusercontent.com/UnownHash/Flygon/main/docker-compose.yml.exampl`
 2. `wget -O flygon-config.toml https://raw.githubusercontent.com/UnownHash/Flygon/main/config.toml.example`
