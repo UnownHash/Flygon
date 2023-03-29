@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var finder *tzf.Finder
+var finder tzf.F
 
 func InitializeTimezone() {
 	input := &pb.Timezones{}
@@ -32,17 +32,11 @@ func InitializeTimezone() {
 }
 
 func SearchTimezone(lat, lng float64) string {
-	if finder == nil {
-		InitializeTimezone()
-	}
 	return finder.GetTimezoneName(lng, lat)
 }
 
 func GetTimezone(lat, lng float64) *time.Location {
-	if finder == nil {
-		InitializeTimezone()
-	}
-
-	tz, _ := finder.GetTimezoneLoc(lng, lat)
+	tzName := SearchTimezone(lat, lng)
+	tz, _ := time.LoadLocation(tzName)
 	return tz
 }

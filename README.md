@@ -13,24 +13,14 @@ At this time this is likely to be mostly development discussion.
 - [Golbat](https://github.com/UnownHash/Golbat) (optional)
 - [Flygon-Admin](https://github.com/UnownHash/Flygon-Admin) (optional)
 
-# Instructions (Recommended)
-1. `git clone https://github.com/UnownHash/Flygon.git flygon && cd flygon`
-2. `cp config.toml.example config.toml`
-3. modify it as you want
-4. `go build`
-5. `pm2 start ./flygon --name flygon -o "/dev/null"`
-6. `cd ..`
+# Instructions
+1. `cp config.toml.example config.toml`
+2. modify it as you want
+3. `go run .`
 
-## Optional
-1. Golbat
-   1. `git clone https://github.com/UnownHash/Golbat.git golbat && cd golbat`
-   2. `cp config.toml.example config.toml`
-   3. modify it as you want
-   4. `go build`
-   5. `pm2 start ./golbat --name golbat -o "/dev/null"`
-   6. `cd ..`
-2. Admin
-   1. TODO
+## Run in pm2 (Recommended)
+1. `go build`
+2. `pm2 start ./flygon --name flygon -o "/dev/null"`
 
 # Run in docker (Full Stack)
 1. `wget -O docker-compose.yml https://raw.githubusercontent.com/UnownHash/Flygon/main/docker-compose.yml.exampl`
