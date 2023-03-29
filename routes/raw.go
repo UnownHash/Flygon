@@ -125,8 +125,6 @@ func rawSender(url string, password string, c *gin.Context, data rawBody) {
 		return
 	}
 	_ = resp.Body.Close()
-
-	log.Debugf("[RAW] Webhook: Response %s", resp.Status)
 }
 
 func decodeGetPlayerOutProto(content content) *pogo.GetPlayerOutProto {
