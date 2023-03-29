@@ -33,3 +33,18 @@ services:
         target: /golbat/logs
     ports:
       - "9001:9001"
+  admin:
+    image: ghcr.io/unownhash/flygon-admin:main
+    container_name: admin
+    restart: unless-stopped
+    environment:
+      GENERAL.USERNAME: admin
+      GENERAL.PASSWORD: password
+
+      FLYGON.API_ENDPOINT: http://flygon:9002
+      FLYGON.API_SECRET: secret
+
+      GOLBAT.API_ENDPOINT: http://golbat:9001
+      GOLBAT.API_SECRET: secret
+    ports:
+      - "9003:9003"
