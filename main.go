@@ -22,6 +22,7 @@ import (
 )
 
 func main() {
+	//tz.InitializeTimezone() //TODO this increases starting time about 2-4 seconds
 	config.ReadConfig()
 
 	// Both Sentry & Pyroscope are optional and off by default. Read more:
