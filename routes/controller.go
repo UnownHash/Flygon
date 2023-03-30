@@ -140,6 +140,7 @@ func handleGetAccount(c *gin.Context, req ControllerBody, workerState *worker.St
 		value, ok := lastLogin.Load(host)
 		if ok {
 			if remainingTime := value.(int64) + int64(loginDelay) - now; remainingTime > 0 {
+				log.Debugf("[CONTROLLER] [%s] Login for host %s throttled, remaining %d s", req.Uuid, host, remainingTime)
 				c.Header("Retry-After", strconv.FormatInt(remainingTime, 10))
 				respondWithError(c, LoginLimitExceeded)
 				return
