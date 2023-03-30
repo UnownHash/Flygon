@@ -25,7 +25,7 @@ golbat_endpoint = "http://127.0.0.1:9001"
 golbat_raw_bearer = ""
 golbat_api_secret = ""
 raw_endpoints = ["token@http://127.0.0.1:9001/raw"]
-# raw_endpoints can be used for any endpoint that accepts the same raw proto format RDM does.
+# OPTIONAL: raw_endpoints can be used for any endpoint that accepts the same raw proto format RDM does.
 # Golbat Endpoint will be used for other means than just raw processing.
 # raw_endpoints are arrays, so if you i.e. don't want any raw endpoints, just put `raw_endpoints = []`. You can also use
 # multiple for each.
