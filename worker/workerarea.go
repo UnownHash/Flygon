@@ -52,13 +52,17 @@ type PokestopScanInfo struct {
 const Quest_Layer_AR = 0
 const Quest_Layer_NoAr = 1
 
-var workerUnseen = int64(config.Config.Worker.RoutePartTimeout)
+var workerUnseen = int64(0)
 
 var ErrNoAreaNeedsWorkers = errors.New("No area needs workers")
 var ErrNoAreaAllocated = errors.New("No area allocated to worker")
 
 var workerAreas map[int]*WorkerArea
 var workerAccessMutex sync.RWMutex
+
+func SetWorkerUnseen() {
+	workerUnseen = int64(config.Config.Worker.RoutePartTimeout)
+}
 
 func RegisterArea(area *WorkerArea) {
 	workerAccessMutex.Lock()

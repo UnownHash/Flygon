@@ -59,6 +59,7 @@ func main() {
 	routes.LoadAccountManager(&am)
 	worker.StartAreas(dbDetails)
 	worker.InitWorkerState()
+	worker.SetWorkerUnseen()
 	//worker.StartUnbound(dbDetails, &am, authenticationQueue)
 	if config.Config.Processors.GolbatEndpoint != "" {
 		golbatapi.SetApiUrl(config.Config.Processors.GolbatEndpoint,
