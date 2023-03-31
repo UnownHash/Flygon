@@ -257,7 +257,7 @@ func (a *AccountManager) MarkDisabled(username string) {
 
 	for x := range a.accounts {
 		if a.accounts[x].Username == username {
-			a.accounts[x].Disabled = true
+			
 			a.accounts[x].LastDisabled = null.IntFrom(time.Now().Unix())
 		}
 	}
