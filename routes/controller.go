@@ -124,6 +124,9 @@ func handleGetAccount(c *gin.Context, req ControllerBody, workerState *worker.St
 		// reuse same account if possible -> to reuse auth token
 		if valid, err := accountManager.IsValidAccount(workerState.Username); err == nil && valid {
 			account = accountManager.GetAccount(workerState.Username)
+		} else {
+			accountManager.ReleaseAccount(workerState.Username)
+			account = accountManager.GetNextAccount(accounts.SelectLevel30)
 		}
 	} else {
 		account = accountManager.GetNextAccount(accounts.SelectLevel30)
