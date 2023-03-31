@@ -6,14 +6,15 @@ import (
 )
 
 type ApiWorkerState struct {
-	Uuid      string
-	AreaId    int
-	Username  string
-	StartStep int
-	EndStep   int
-	Step      int
-	Host      string
-	LastSeen  int64
+	Id        int    `json:"id"`
+	Uuid      string `json:"uuid"`
+	Username  string `json:"username"`
+	AreaId    int    `json:"area_id"`
+	StartStep int    `json:"start_step"`
+	EndStep   int    `json:"end_step"`
+	Step      int    `json:"step"`
+	Host      string `json:"host"`
+	LastSeen  int64  `json:"last_seen"`
 }
 
 func GetWorkers(c *gin.Context) {
@@ -25,22 +26,23 @@ func buildWorkerResponse() []ApiWorkerState {
 	workers := worker.GetWorkers()
 
 	workerList := []ApiWorkerState{}
-	for _, w := range workers {
-		workerList = append(workerList, buildSingleWorker(w))
+	for i, w := range workers {
+		workerList = append(workerList, buildSingleWorker(w, i))
 	}
 
 	return workerList
 }
 
-func buildSingleWorker(s *worker.State) ApiWorkerState {
+func buildSingleWorker(s *worker.State, i int) ApiWorkerState {
 	return ApiWorkerState{
+		Id:        i,
 		Uuid:      s.Uuid,
-		AreaId:    s.AreaId,
 		Username:  s.Username,
+		AreaId:    s.AreaId,
 		StartStep: s.StartStep,
 		EndStep:   s.EndStep,
 		Step:      s.Step,
 		Host:      s.Host,
-		LastSeen:  s.LastSeen,
+		LastSeen:  s.LastSeen * 1000,
 	}
 }
