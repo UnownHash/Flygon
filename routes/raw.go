@@ -28,16 +28,16 @@ type rawBody struct {
 	LatTarget  float64     `json:"lat_target"`
 	LonTarget  float64     `json:"lon_target"`
 	Contents   []content   `json:"contents" binding:"required"`
-	Protos     interface{} `json:"protos"` // only one of those three is needed
-	GMO        interface{} `json:"gmo"`    // only one of those three is needed
-	HaveAr     *bool       `json:"have_ar"` //optional, at least when method 101 is send it should be present
+	Protos     interface{} `json:"protos,omitempty"`  // only one of those three is needed
+	GMO        interface{} `json:"gmo,omitempty"`     // only one of those three is needed
+	HaveAr     *bool       `json:"have_ar,omitempty"` //optional, at least when method 101 is send it should be present
 	// TrainerLevel int         `json:"trainerLevel" default:"0"`
 }
 
 type content struct {
-	Data    string `json:"data" binding:"required"`
-	Method  int    `json:"method" binding:"required"`
-	HaveAr  *bool  `json:"have_ar"` // optional, at least when method 101 is send it should be present in content or in root
+	Data   string `json:"data" binding:"required"`
+	Method int    `json:"method" binding:"required"`
+	HaveAr *bool  `json:"have_ar,omitempty"` // optional, at least when method 101 is send it should be present in content or in root
 }
 
 // rawSendingClient Send raws to golbat, or other data parser

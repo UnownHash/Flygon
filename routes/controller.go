@@ -152,7 +152,9 @@ func handleGetAccount(c *gin.Context, req ControllerBody, workerState *worker.St
 		lastLogin.Store(host, now)
 	}
 
-	log.Debugf("[CONTROLLER] [%s] Recalculate route parts because of GetAccount", workerState.Username)
+	workerState.Touch(host)
+
+	log.Debugf("[CONTROLLER] [%s] Recalculate route parts because of GetAccount", workerState.Uuid)
 	a.RecalculateRouteParts()
 	data := map[string]any{
 		"username": account.Username,
