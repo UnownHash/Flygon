@@ -27,16 +27,17 @@ type rawBody struct {
 	TrainerLvl int         `json:"trainerlvl" default:"0"`
 	LatTarget  float64     `json:"lat_target"`
 	LonTarget  float64     `json:"lon_target"`
-	Contents   []content   `json:"contents" binding:"required"` // only one of those three is needed
-	Protos     interface{} `json:"protos"`                      // only one of those three is needed
-	GMO        interface{} `json:"gmo"`                         // only one of those three is needed
+	Contents   []content   `json:"contents" binding:"required"`
+	Protos     interface{} `json:"protos"` // only one of those three is needed
+	GMO        interface{} `json:"gmo"`    // only one of those three is needed
 	HaveAr     *bool       `json:"have_ar"`
 	// TrainerLevel int         `json:"trainerLevel" default:"0"`
 }
 
 type content struct {
-	Data   string `json:"data"`
-	Method int    `json:"method"`
+	Data    string `json:"data"`
+	Payload string `json:"payload"`
+	Method  int    `json:"method"`
 }
 
 // rawSendingClient Send raws to golbat, or other data parser
@@ -129,7 +130,14 @@ func rawSender(url string, password string, c *gin.Context, data rawBody) {
 
 func decodeGetPlayerOutProto(content content) *pogo.GetPlayerOutProto {
 	getPlayerProto := &pogo.GetPlayerOutProto{}
-	data, _ := b64.StdEncoding.DecodeString(content.Data)
+	var data []byte
+	if content.Data != "" {
+		data, _ = b64.StdEncoding.DecodeString(content.Data)
+	} else if content.Payload != "" {
+		data, _ = b64.StdEncoding.DecodeString(content.Payload)
+	} else {
+		log.Fatalln("[RAW] No data available in response")
+	}
 	if err := proto.Unmarshal(data, getPlayerProto); err != nil {
 		log.Fatalln("Failed to parse GetPlayerOutProto", err)
 	}
