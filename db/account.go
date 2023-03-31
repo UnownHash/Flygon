@@ -16,7 +16,6 @@ type Account struct {
 	LastSuspended  null.Int `db:"last_suspended"`
 	Banned         bool     `db:"banned"`
 	LastBanned     null.Int `db:"last_banned"`
-	Disabled       bool     `db:"disabled"`
 	LastDisabled   null.Int `db:"last_disabled"`
 	Invalid        bool     `db:"invalid"`
 	LastSelected   null.Int `db:"last_selected"`
@@ -125,7 +124,7 @@ func MarkBanned(db DbDetails, username string) error {
 }
 
 func MarkDisabled(db DbDetails, username string) error {
-	_, err := db.FlygonDb.Exec("UPDATE account SET disabled=1, last_disabled=UNIX_TIMESTAMP() WHERE Username=?", username)
+	_, err := db.FlygonDb.Exec("UPDATE account SET last_disabled=UNIX_TIMESTAMP() WHERE Username=?", username)
 	return err
 }
 
