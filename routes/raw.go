@@ -36,7 +36,6 @@ type rawBody struct {
 
 type content struct {
 	Data    string `json:"data"`
-	Payload string `json:"payload"`
 	Method  int    `json:"method"`
 }
 
@@ -130,14 +129,7 @@ func rawSender(url string, password string, c *gin.Context, data rawBody) {
 
 func decodeGetPlayerOutProto(content content) *pogo.GetPlayerOutProto {
 	getPlayerProto := &pogo.GetPlayerOutProto{}
-	var data []byte
-	if content.Data != "" {
-		data, _ = b64.StdEncoding.DecodeString(content.Data)
-	} else if content.Payload != "" {
-		data, _ = b64.StdEncoding.DecodeString(content.Payload)
-	} else {
-		log.Fatalln("[RAW] No data available in response")
-	}
+	data, _ := b64.StdEncoding.DecodeString(content.Data)
 	if err := proto.Unmarshal(data, getPlayerProto); err != nil {
 		log.Fatalln("Failed to parse GetPlayerOutProto", err)
 	}
