@@ -56,6 +56,22 @@ func GetAreaRecord(db DbDetails, id int) (*Area, error) {
 	return &area[0], nil
 }
 
+func GetAreaRecordByName(db DbDetails, name string) (*Area, error) {
+	area := Area{}
+	err := db.FlygonDb.Get(&area, "SELECT id, name, pokemon_mode_workers, pokemon_mode_route, fort_mode_workers, fort_mode_route, quest_mode_workers, quest_mode_hours, quest_mode_route, geofence, enable_quests FROM area "+
+		"WHERE name = ?", name)
+
+	if err == sql.ErrNoRows {
+		return nil, err
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &area, nil
+}
+
 func CreateArea(db DbDetails, area Area) (int64, error) {
 	res, err := db.FlygonDb.NamedExec("INSERT INTO area (name, pokemon_mode_workers, pokemon_mode_route, fort_mode_workers, fort_mode_route, quest_mode_workers, quest_mode_hours, quest_mode_route, geofence, enable_quests)"+
 		"VALUES (:name, :pokemon_mode_workers, :pokemon_mode_route, :fort_mode_workers, :fort_mode_route, :quest_mode_workers, :quest_mode_hours, :quest_mode_route, :geofence, :enable_quests)",

@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"flygon/db"
-	"flygon/routecalc"
+	"flygon/koji"
 	"flygon/tz"
 	log "github.com/sirupsen/logrus"
 )
@@ -31,7 +31,7 @@ func QuestRouteBuilder() {
 				log.Infof("Calculating quest route for area %s", area.Name)
 				calculateArea := area
 				go func() {
-					newRoute, err := routecalc.GetKojiRoute(calculateArea.questFence, calculateArea.Name)
+					newRoute, err := koji.GetKojiRoute(calculateArea.questFence, calculateArea.Name)
 
 					if err == nil {
 						calculateArea.questRoute = newRoute

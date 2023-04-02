@@ -2,12 +2,12 @@ package worker
 
 import (
 	"os"
-	"time"
+	// "time"
 
-	"flygon/config"
+	// "flygon/config"
 	"flygon/db"
 	"flygon/geo"
-	"github.com/go-co-op/gocron"
+	// "github.com/go-co-op/gocron"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
 )
@@ -55,11 +55,12 @@ func StartAreas(dbDetails db.DbDetails) {
 		//go workerArea.Start()
 	}
 
-	if config.Config.General.KojiUrl != "" {
-		s := gocron.NewScheduler(time.UTC)
-		s.Every(1).Hour().Do(QuestRouteBuilder)
-		s.StartAsync()
-	}
+	// come back when quests are ready
+	// if config.Config.Koji.Url != "" {
+	// 	s := gocron.NewScheduler(time.UTC)
+	// 	s.Every(1).Hour().Do(QuestRouteBuilder)
+	// 	s.StartAsync()
+	// }
 	StartWorkerRoutePartRecalculationScheduler()
 }
 

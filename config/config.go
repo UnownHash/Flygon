@@ -7,6 +7,7 @@ type configDefinition struct {
 	Db         DbDefinition        `mapstructure:"db"`
 	Sentry     sentry              `mapstructure:"sentry"`
 	Pyroscope  pyroscope           `mapstructure:"pyroscope"`
+	Koji       koji                `mapstructure:"koji"`
 }
 
 type generalDefinition struct {
@@ -18,8 +19,6 @@ type generalDefinition struct {
 	ApiSecret           string `mapstructure:"api_secret"`
 	BearerToken         string `mapstructure:"bearer_token"`
 	RouteCalcUrl        string `mapstructure:"routecalc_url"`
-	KojiUrl             string `mapstructure:"koji_url"`
-	KojiBearerToken     string `mapstructure:"koji_bearer_token"`
 }
 
 type processorDefinition struct {
@@ -58,6 +57,13 @@ type pyroscope struct {
 	Logger               bool   `mapstructure:"logger"`
 	MutexProfileFraction int    `mapstructure:"mutex_profile_fraction"`
 	BlockProfileRate     int    `mapstructure:"block_profile_rate"`
+}
+
+type koji struct {
+	Url           string `mapstructure:"url"`
+	BearerToken   string `mapstructure:"bearer_token"`
+	LoadAtStartup bool   `mapstructure:"load_at_startup"`
+	ProjectName   string `mapstructure:"project_name"`
 }
 
 var Config configDefinition

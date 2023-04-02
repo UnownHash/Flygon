@@ -5,7 +5,7 @@ import (
 	"flygon/config"
 	"flygon/geo"
 	"flygon/golbatapi"
-	"flygon/routecalc"
+	"flygon/koji"
 	"github.com/jellydator/ttlcache/v3"
 	log "github.com/sirupsen/logrus"
 	"sync"
@@ -303,7 +303,7 @@ func (p *WorkerArea) RouteLength() int {
 
 func (p *WorkerArea) calculateQuestRoute() {
 	// This shouldn't be done like this, but hacking it into place right now
-	if config.Config.General.KojiUrl != "" {
+	if config.Config.Koji.Url != "" {
 		p.calculateKojiQuestRoute()
 	}
 	log.Infof("KOJI: quest route is empty and koji url is empty, no routes will be calculated")
@@ -313,7 +313,7 @@ func (p *WorkerArea) calculateQuestRoute() {
 func (p *WorkerArea) calculateKojiQuestRoute() {
 	log.Infof("KOJI: %s Calculating shortest quest route using Koji Web Service", p.Name)
 	start := time.Now()
-	shortRoute, err := routecalc.GetKojiRoute(p.questFence, p.Name)
+	shortRoute, err := koji.GetKojiRoute(p.questFence, p.Name)
 	log.Infof("KOJI: %s Koji routecalc took %s", p.Name, time.Since(start))
 
 	if err == nil {
