@@ -32,6 +32,6 @@ At this time this is likely to be mostly development discussion.
 
 # Run in docker (Full Stack)
 1. `wget -O docker-compose.yml https://raw.githubusercontent.com/UnownHash/Flygon/main/docker-compose.yml.exampl`
-2. `wget -O flygon-config.toml https://raw.githubusercontent.com/UnownHash/Flygon/main/config.toml.example`
-3. `wget -O golbat-config.toml https://raw.githubusercontent.com/UnownHash/Golbat/main/config.toml.example`
+2. `wget -O flygon_config.toml https://raw.githubusercontent.com/UnownHash/Flygon/main/config.toml.example`
+3. `wget -O golbat_config.toml https://raw.githubusercontent.com/UnownHash/Golbat/main/config.toml.example`
 4. modify it as you want - adapt also admin service in `docker-compose.yml`
