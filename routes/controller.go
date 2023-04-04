@@ -170,12 +170,20 @@ func handleGetAccount(c *gin.Context, req ControllerBody, workerState *worker.St
 func handleGetJob(c *gin.Context, req ControllerBody, workerState *worker.State) {
 	log.Debugf("[CONTROLLER] [%s] GetJob From Account: %s", req.Uuid, req.Username)
 
+	if workerState.AreaId == 0 {
+		log.Debugf("[CONTROLLER] [%s] Worker asked for job without area assigned", req.Uuid)
+		respondWithError(c, InstanceNotFound)
+		return
+	}
+
 	isValid, err := accountManager.IsValidAccount(req.Username)
 	if err != nil {
+		log.Debugf("[CONTROLLER] [%s] Account '%s' not found", req.Uuid, req.Username)
 		respondWithError(c, AccountNotFound)
 		return
 	}
 	if !isValid || workerState.Username != req.Username {
+		log.Debugf("[CONTROLLER] [%s] Account '%s' is not valid.", req.Uuid, req.Username)
 		workerState.ResetUsername()
 		respondWithData(c, &map[string]any{
 			"action":    SwitchAccount.String(),
@@ -189,8 +197,10 @@ func handleGetJob(c *gin.Context, req ControllerBody, workerState *worker.State)
 		log.Infof("[CONTROLLER] [%s] Worker finished route", req.Username)
 		workerState.Step = workerState.StartStep
 	}
+
 	wa := worker.GetWorkerArea(workerState.AreaId)
 	if wa == nil {
+		log.Debugf("[CONTROLLER] [%s] Area '%d' does not exist", req.Uuid, workerState.AreaId)
 		respondWithError(c, InstanceNotFound)
 		return
 	}

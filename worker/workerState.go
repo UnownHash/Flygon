@@ -87,6 +87,13 @@ func (ws *State) ResetUsername() {
 	ws.Username = ""
 }
 
+func (ws *State) ResetAreaAndRoutePart() {
+	ws.AreaId = 0
+	ws.StartStep = 0
+	ws.EndStep = 0
+	ws.Step = 0
+}
+
 func (ws *State) Touch(host string) {
 	ws.LastSeen = time.Now().Unix()
 	ws.Host = host

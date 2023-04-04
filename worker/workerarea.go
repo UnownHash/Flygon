@@ -77,12 +77,15 @@ func RegisterArea(area *WorkerArea) {
 
 func RemoveArea(area *WorkerArea) {
 	workerAccessMutex.Lock()
+	defer workerAccessMutex.Unlock()
 
+	for _, state := range GetWorkersWithArea(area.Id) {
+		state.ResetAreaAndRoutePart()
+	}
 	if workerAreas != nil {
 		delete(workerAreas, area.Id)
 	}
 
-	workerAccessMutex.Unlock()
 }
 
 func GetWorkerAreas() (results []*WorkerArea) {
@@ -128,6 +131,21 @@ func (ws *State) GetAllocatedArea() (*WorkerArea, error) {
 		return nil, ErrNoAreaAllocated
 	} else {
 		return wa, nil
+	}
+}
+
+func (ws *State) DeAllocateArea() {
+	oldArea := ws.AreaId
+	if oldArea == 0 {
+		return
+	}
+	ws.ResetAreaAndRoutePart()
+	workerAccessMutex.Lock()
+	defer workerAccessMutex.Unlock()
+
+	area := workerAreas[oldArea]
+	if area != nil {
+		area.RecalculateRouteParts()
 	}
 }
 
@@ -243,6 +261,7 @@ func RecalculateRoutePartsIfNeeded() {
 }
 
 func (p *WorkerArea) GetRouteLocationOfStep(stepNo int) geo.Location {
+	//TODO safe check, check for length before?
 	return p.route[stepNo]
 }
 
