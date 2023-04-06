@@ -19,6 +19,11 @@ bearer_token = ""
 # apiSecret protects api routes
 # bearerToken protects device routes
 
+[koji]
+load_at_startup = false
+url = ""
+bearer_token = "your_koji_secret"
+project_name = "your_flygon_project"
 
 [processors]
 golbat_endpoint = "http://127.0.0.1:9001"

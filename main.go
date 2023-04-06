@@ -6,20 +6,21 @@ import (
 	"flygon/db"
 	"flygon/external"
 	"flygon/golbatapi"
-	"flygon/routecalc"
+	"flygon/koji"
 	"flygon/routes"
 	"flygon/tz"
 	"flygon/util"
 	"flygon/worker"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/mysql"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jmoiron/sqlx"
 	log "github.com/sirupsen/logrus"
-	"strings"
-	"time"
 )
 
 func main() {
@@ -54,7 +55,10 @@ func main() {
 	am := accounts.AccountManager{}
 	am.LoadAccounts(dbDetails)
 
-	routecalc.SetKojiUrl(config.Config.General.KojiUrl, config.Config.General.KojiBearerToken)
+	koji.SetKoji()
+	if config.Config.Koji.LoadAtStartup {
+		koji.LoadKojiAreas(&dbDetails)
+	}
 	routes.ConnectDatabase(&dbDetails)
 	routes.LoadAccountManager(&am)
 	worker.StartAreas(dbDetails)
