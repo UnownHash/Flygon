@@ -4,6 +4,7 @@ import (
 	"flygon/config"
 	"flygon/db"
 	"fmt"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/guregu/null.v4"
@@ -96,7 +97,10 @@ func LoadKojiAreas(details *db.DbDetails) {
 		return
 	}
 
-	for _, kojiFenceRef := range kojiFenceRefs.Data {
+	for i, kojiFenceRef := range kojiFenceRefs.Data {
+		if i%33 == 0 {
+			time.Sleep(500 * time.Millisecond)
+		}
 		go setAreas(details, kojiFenceRef)
 	}
 }
