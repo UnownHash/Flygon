@@ -4,7 +4,7 @@ import (
 	"flygon/config"
 	"flygon/db"
 	"fmt"
-	"time"
+	"sync"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/guregu/null.v4"
@@ -96,11 +96,19 @@ func LoadKojiAreas(details *db.DbDetails) {
 		log.Errorf("[KOJI]: %s", err)
 		return
 	}
+	var backgroundProcesses sync.WaitGroup
 
-	for i, kojiFenceRef := range kojiFenceRefs.Data {
-		if i%33 == 0 {
-			time.Sleep(500 * time.Millisecond)
-		}
-		go setAreas(details, kojiFenceRef)
+	parallelSem := make(chan bool, 50)
+
+	for _, kojiFenceRef := range kojiFenceRefs.Data {
+		backgroundProcesses.Add(1)
+		go func(fence RefData) {
+			defer backgroundProcesses.Done()
+			defer func() { <-parallelSem }()
+			parallelSem <- true
+			setAreas(details, fence)
+		}(kojiFenceRef)
 	}
+
+	backgroundProcesses.Wait()
 }
