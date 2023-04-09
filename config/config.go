@@ -6,6 +6,7 @@ type configDefinition struct {
 	Worker     workerDefinition    `mapstructure:"worker"`
 	Db         DbDefinition        `mapstructure:"db"`
 	Sentry     sentry              `mapstructure:"sentry"`
+	Prometheus prometheus          `mapstructure:"prometheus"`
 	Pyroscope  pyroscope           `mapstructure:"pyroscope"`
 	Koji       koji                `mapstructure:"koji"`
 }
@@ -57,6 +58,12 @@ type pyroscope struct {
 	Logger               bool   `mapstructure:"logger"`
 	MutexProfileFraction int    `mapstructure:"mutex_profile_fraction"`
 	BlockProfileRate     int    `mapstructure:"block_profile_rate"`
+}
+
+type prometheus struct {
+	Enabled    bool      `mapstructure:"enabled"`
+	Token      string    `mapstructure:"token"`
+	BucketSize []float64 `mapstructure:"bucket_size"`
 }
 
 type koji struct {

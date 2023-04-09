@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	b64 "encoding/base64"
 	"encoding/json"
+	"flygon/external"
 	"flygon/pogo"
 	"flygon/worker"
 	"github.com/gin-gonic/gin"
@@ -63,9 +64,11 @@ func Raw(c *gin.Context) {
 	err := c.ShouldBindJSON(&res)
 	if err != nil {
 		log.Warnf("POST /raw/ in wrong format! %s", err.Error())
+		external.RawRequests.WithLabelValues("error").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	external.RawRequests.WithLabelValues("ok").Inc()
 	respondWithOk(c)
 	go func() {
 		// no need to remove Encounter if trainerlvl below 30

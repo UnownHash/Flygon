@@ -41,5 +41,5 @@ func setDefaults() {
 	viper.SetDefault("pyroscope.application_name", "flygon")
 	viper.SetDefault("pyroscope.mutex_profile_fraction", 5)
 	viper.SetDefault("pyroscope.block_profile_rate", 5)
-
+	viper.SetDefault("prometheus.bucket_size", []float64{.00005, .000075, .0001, .00025, .0005, .00075, .001, .0025, .005, .01, .05, .1, .25, .5, 1, 2.5, 5, 10})
 }
