@@ -55,3 +55,6 @@ dsn = ""
 [pyroscope]
 server_address = ""
 
+#[prometheus]
+#enabled = false
+#token = ""
