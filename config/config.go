@@ -6,6 +6,7 @@ type configDefinition struct {
 	Worker     workerDefinition    `mapstructure:"worker"`
 	Db         DbDefinition        `mapstructure:"db"`
 	Sentry     sentry              `mapstructure:"sentry"`
+	Prometheus prometheus          `toml:"prometheus"`
 	Pyroscope  pyroscope           `mapstructure:"pyroscope"`
 	Koji       koji                `mapstructure:"koji"`
 }
@@ -59,6 +60,12 @@ type pyroscope struct {
 	BlockProfileRate     int    `mapstructure:"block_profile_rate"`
 }
 
+type prometheus struct {
+	Enabled    bool      `toml:"enabled"`
+	Token      string    `toml:"token"`
+	BucketSize []float64 `toml:"bucket_size"`
+}
+
 type koji struct {
 	Url           string `mapstructure:"url"`
 	BearerToken   string `mapstructure:"bearer_token"`
@@ -66,4 +73,17 @@ type koji struct {
 	ProjectName   string `mapstructure:"project_name"`
 }
 
-var Config configDefinition
+var Config = configDefinition{
+	Sentry: sentry{
+		SampleRate:       1.0,
+		TracesSampleRate: 1.0,
+	},
+	Pyroscope: pyroscope{
+		ApplicationName:      "flygon",
+		MutexProfileFraction: 5,
+		BlockProfileRate:     5,
+	},
+	Prometheus: prometheus{
+		BucketSize: []float64{.00005, .000075, .0001, .00025, .0005, .00075, .001, .0025, .005, .01, .05, .1, .25, .5, 1, 2.5, 5, 10},
+	},
+}

@@ -4,6 +4,7 @@ import (
 	"flygon/accounts"
 	"flygon/config"
 	"flygon/db"
+	"flygon/external"
 	"fmt"
 	"net/http"
 
@@ -26,6 +27,7 @@ func StartGin() {
 	gin.SetMode(gin.ReleaseMode)
 	// gin.SetMode(gin.DebugMode)
 	r := gin.New()
+	external.InitPrometheus(r)
 	//r.SetTrustedProxies(nil) //TODO actually every proxy is trusted
 	//r.Use(ginlogrus.Logger(log.StandardLogger()), gin.Recovery()) // don't use
 	r.Use(gin.Recovery())

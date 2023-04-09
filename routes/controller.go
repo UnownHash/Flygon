@@ -3,6 +3,7 @@ package routes
 import (
 	"flygon/accounts"
 	"flygon/config"
+	"flygon/external"
 	"flygon/worker"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -54,6 +55,7 @@ func Controller(c *gin.Context) {
 	var req ControllerBody
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
+		external.ControllerRequests.WithLabelValues("error", "").Inc()
 		log.Warnf("POST /controler/ in wrong format! %s", err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -61,28 +63,40 @@ func Controller(c *gin.Context) {
 	ws := worker.GetWorkerState(req.Uuid)
 	switch req.Type {
 	case "init":
+		external.ControllerRequests.WithLabelValues("ok", "init").Inc()
 		handleInit(c, req, ws)
 	case "heartbeat":
+		external.ControllerRequests.WithLabelValues("ok", "heartbeat").Inc()
 		handleHeartbeat(c, req, ws)
 	case "get_job":
+		external.ControllerRequests.WithLabelValues("ok", "get_job").Inc()
 		handleGetJob(c, req, ws)
 	case "get_account":
+		external.ControllerRequests.WithLabelValues("ok", "get_account").Inc()
 		handleGetAccount(c, req, ws)
 	case "tutorial_done":
+		external.ControllerRequests.WithLabelValues("ok", "tutorial_done").Inc()
 		handleTutorialDone(c, req, ws)
 	case "account_banned":
+		external.ControllerRequests.WithLabelValues("ok", "account_banned").Inc()
 		handleAccountBanned(c, req, ws)
 	case "account_suspended":
+		external.ControllerRequests.WithLabelValues("ok", "account_suspended").Inc()
 		handleAccountSuspended(c, req, ws)
 	case "account_warning":
+		external.ControllerRequests.WithLabelValues("ok", "account_warning").Inc()
 		handleAccountWarning(c, req, ws)
 	case "account_invalid_credentials":
+		external.ControllerRequests.WithLabelValues("ok", "account_invalid_credentials").Inc()
 		handleAccountInvalidCredentials(c, req, ws)
 	case "account_unknown_error":
+		external.ControllerRequests.WithLabelValues("ok", "account_unknown_error").Inc()
 		handleAccountUnknownError(c, req, ws)
 	case "logged_out":
+		external.ControllerRequests.WithLabelValues("ok", "logged_out").Inc()
 		handleLoggedOut(c, req, ws)
 	default:
+		external.ControllerRequests.WithLabelValues("ok", "unknown").Inc()
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error"})
 	}
 }
