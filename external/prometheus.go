@@ -18,7 +18,7 @@ var (
 	)
 	ControllerRequests = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "raw_requests",
+			Name: "controller_requests",
 			Help: "Total number of requests received by controller endpoint",
 		},
 		[]string{"status", "type"},
