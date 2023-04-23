@@ -208,7 +208,7 @@ func handleGetJob(c *gin.Context, req ControllerBody, workerState *worker.State)
 	}
 	workerState.Step++
 	if workerState.Step > workerState.EndStep {
-		log.Infof("[CONTROLLER] [%s] Worker finished route", req.Username)
+		log.Infof("[CONTROLLER] [%s] Worker finished route", req.Uuid)
 		workerState.Step = workerState.StartStep
 	}
 
