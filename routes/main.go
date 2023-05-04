@@ -36,16 +36,13 @@ func StartGin() {
 	protectedDevice := r.Group("/")
 	protectedDevice.Use(BearerTokenMiddleware())
 	protectedDevice.POST("controler", Controller)
+	protectedDevice.POST("controller", Controller)
 	protectedDevice.POST("raw", Raw)
-	protectedDevice.GET("status", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"version": Version, "commit": Commit})
-	})
+	protectedDevice.GET("health", GetHealth)
 
 	protectedApi := r.Group("/api")
 	protectedApi.Use(ApiTokenMiddleware())
-	protectedApi.GET("status", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"version": Version, "commit": Commit})
-	})
+	protectedApi.GET("health", GetHealth)
 	//protected.POST("/clear-quests", ClearQuests)
 
 	protectedApi.GET("/areas/", GetAreas)
@@ -73,6 +70,10 @@ func StartGin() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func GetHealth(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"status": "ok", "version": Version, "commit": Commit})
 }
 
 func CORSMiddleware() gin.HandlerFunc {

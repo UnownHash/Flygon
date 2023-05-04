@@ -28,6 +28,7 @@ type rawBody struct {
 	TrainerLvl int         `json:"trainerlvl" default:"0"`
 	LatTarget  float64     `json:"lat_target"`
 	LonTarget  float64     `json:"lon_target"`
+	Timestamp  int         `json:"timestamp"`
 	Contents   []content   `json:"contents" binding:"required"`
 	Protos     interface{} `json:"protos,omitempty"`  // only one of those three is needed
 	GMO        interface{} `json:"gmo,omitempty"`     // only one of those three is needed
@@ -70,6 +71,7 @@ func Raw(c *gin.Context) {
 	}
 	external.RawRequests.WithLabelValues("ok").Inc()
 	respondWithOk(c)
+	log.Debugf("[RAW] [%s] incoming, with %d contents", res.Uuid, len(res.Contents))
 	go func() {
 		// no need to remove Encounter if trainerlvl below 30
 		// -> Golbat is already filtering that data
