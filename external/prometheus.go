@@ -23,6 +23,13 @@ var (
 		},
 		[]string{"status", "type"},
 	)
+	WorkerStats = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "job_processing_time_seconds",
+			Help: "Time taken to process jobs",
+		},
+		[]string{"status"},
+	)
 )
 
 func InitPrometheus(r *gin.Engine) {
@@ -39,7 +46,7 @@ func InitPrometheus(r *gin.Engine) {
 		r.Use(p.Instrument())
 
 		prometheus.MustRegister(
-			RawRequests, ControllerRequests,
+			WorkerStats, RawRequests, ControllerRequests,
 		)
 	}
 }

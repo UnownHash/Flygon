@@ -227,6 +227,7 @@ func handleGetJob(c *gin.Context, req ControllerBody, workerState *worker.State)
 		"max_level": 40,
 	}
 	log.Debugf("[CONTROLLER] [%s] Sending task %s at %f, %f", req.Uuid, task["action"], task["lat"], task["lon"])
+	external.WorkerStats.WithLabelValues(req.Uuid, ScanPokemon.String()).Inc()
 	respondWithData(c, &task)
 	return
 }

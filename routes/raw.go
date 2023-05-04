@@ -88,13 +88,19 @@ func Raw(c *gin.Context) {
 			accountManager.SetLevel(res.Username, res.TrainerLvl)
 		}
 		//body, _ := ioutil.ReadAll(c.Request.Body)
-
+		var containsPokemon = false
 		for _, rawContent := range res.Contents {
 			if rawContent.Method == 2 {
 				getPlayerOutProto := decodeGetPlayerOutProto(rawContent)
 				accountManager.UpdateDetailsFromGame(res.Username, getPlayerOutProto, res.TrainerLvl)
 				log.Debugf("[RAW] [%s] Account '%s' updated with information from Game", res.Uuid, res.Username)
 			}
+			if rawContent.Method == 102 {
+				containsPokemon = true
+			}
+		}
+		if containsPokemon {
+			external.WorkerStats.WithLabelValues(res.Uuid, ScanPokemon.String()).Dec()
 		}
 	}()
 }
