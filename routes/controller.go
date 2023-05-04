@@ -223,11 +223,11 @@ func handleGetJob(c *gin.Context, req ControllerBody, workerState *worker.State)
 		"action":    ScanPokemon.String(),
 		"lat":       location.Latitude,
 		"lon":       location.Longitude,
+		"timestamp": time.Now().Unix(),
 		"min_level": 30,
 		"max_level": 40,
 	}
 	log.Debugf("[CONTROLLER] [%s] Sending task %s at %f, %f", req.Uuid, task["action"], task["lat"], task["lon"])
-	external.WorkerStats.WithLabelValues(req.Uuid, ScanPokemon.String()).Inc()
 	respondWithData(c, &task)
 	return
 }

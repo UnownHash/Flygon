@@ -10,6 +10,7 @@ import (
 	"flygon/worker"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/rand"
 	"google.golang.org/protobuf/proto"
 	"net"
 	"net/http"
@@ -100,7 +101,7 @@ func Raw(c *gin.Context) {
 			}
 		}
 		if containsPokemon {
-			external.WorkerStats.WithLabelValues(res.Uuid, ScanPokemon.String()).Dec()
+			external.WorkerStats.WithLabelValues(res.Uuid, ScanPokemon.String()).Observe(rand.Float64() * 10) //TODO use right timing
 		}
 	}()
 }

@@ -23,12 +23,12 @@ var (
 		},
 		[]string{"status", "type"},
 	)
-	WorkerStats = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
+	WorkerStats = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
 			Name: "job_processing_time_seconds",
 			Help: "Time taken to process jobs",
 		},
-		[]string{"status"},
+		[]string{"uuid", "action"},
 	)
 )
 
