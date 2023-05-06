@@ -74,7 +74,7 @@ func ApiRouteToLocation(apiList []ApiLocation) []geo.Location {
 }
 
 func GetAreas(c *gin.Context) {
-	areaList := buildAreaResponse()
+	areaList := buildAreaResponse(c)
 	if areaList == nil {
 		c.Status(http.StatusInternalServerError)
 		return
@@ -105,49 +105,61 @@ func GetOneArea(context *gin.Context) {
 		return
 	}
 
-	respArea := buildSingleArea(*dbArea)
+	respArea := buildSingleArea(*dbArea, true)
 	context.JSON(http.StatusOK, &respArea)
 }
 
-func buildAreaResponse() []ApiArea {
+func buildAreaResponse(c *gin.Context) []ApiArea {
 	areas, err := db.GetAreaRecords(*dbDetails)
 	if err != nil {
 		log.Warnf("api /areas/ Error during get area records %v", err)
 		return nil
 	}
 
+	geometry, err := strconv.ParseBool(c.DefaultQuery("geometry", "true"))
+	if err != nil {
+		log.Warnf("api /areas/ Error during parse geometry %v", err)
+		geometry = true
+	}
+
 	areaList := []ApiArea{}
 	for _, a := range areas {
-		areaList = append(areaList, buildSingleArea(a))
+		areaList = append(areaList, buildSingleArea(a, geometry))
 	}
 
 	return areaList
 }
 
-func buildSingleArea(a db.Area) ApiArea {
-	pokemonRoute, err := db.ParseRouteFromString(a.PokemonModeRoute.ValueOrZero())
-
-	if err != nil {
-		log.Warnf("API: Invalid pokemon route in area %d:%s", a.Id, a.Name)
-		pokemonRoute = []geo.Location{}
+func buildSingleArea(a db.Area, geometry bool) ApiArea {
+	pokemonRoute, err := []geo.Location{}, error(nil)
+	if geometry {
+		pokemonRoute, err = db.ParseRouteFromString(a.PokemonModeRoute.ValueOrZero())
+		if err != nil {
+			log.Warnf("API: Invalid pokemon route in area %d:%s", a.Id, a.Name)
+		}
 	}
 
-	fortRoute, err := db.ParseRouteFromString(a.FortModeRoute.ValueOrZero())
-	if err != nil {
-		log.Warnf("API: Invalid fort route in area %d:%s", a.Id, a.Name)
-		fortRoute = []geo.Location{}
+	fortRoute := []geo.Location{}
+	if geometry {
+		fortRoute, err = db.ParseRouteFromString(a.FortModeRoute.ValueOrZero())
+		if err != nil || !geometry {
+			log.Warnf("API: Invalid fort route in area %d:%s", a.Id, a.Name)
+		}
+	}
+	questRoute := []geo.Location{}
+	if geometry {
+		questRoute, err = db.ParseRouteFromString(a.QuestModeRoute.ValueOrZero())
+		if err != nil || !geometry {
+			log.Warnf("API: Invalid quest route in area %d:%s", a.Id, a.Name)
+		}
 	}
 
-	questRoute, err := db.ParseRouteFromString(a.QuestModeRoute.ValueOrZero())
-	if err != nil {
-		log.Warnf("API: Invalid quest route in area %d:%s", a.Id, a.Name)
-		questRoute = []geo.Location{}
-	}
-
-	geofence, err := db.ParseRouteFromString(a.Geofence.ValueOrZero())
-	if err != nil {
-		log.Warnf("API: Invalid geofence in area %d:%s", a.Id, a.Name)
-		geofence = []geo.Location{}
+	geofence := []geo.Location{}
+	if geometry {
+		geofence, err = db.ParseRouteFromString(a.Geofence.ValueOrZero())
+		if err != nil {
+			log.Warnf("API: Invalid geofence in area %d:%s", a.Id, a.Name)
+		}
 	}
 
 	return ApiArea{
@@ -206,7 +218,7 @@ func PostArea(c *gin.Context) {
 	}
 
 	dbArea, _ := db.GetAreaRecord(*dbDetails, int(id))
-	respArea := buildSingleArea(*dbArea)
+	respArea := buildSingleArea(*dbArea, true)
 	c.JSON(http.StatusAccepted, &respArea)
 
 	worker.ReloadAreas(*dbDetails)
@@ -229,7 +241,7 @@ func DeleteArea(c *gin.Context) {
 		return
 	}
 
-	areaList := buildAreaResponse()
+	areaList := buildAreaResponse(c)
 	if areaList == nil {
 		c.Status(http.StatusInternalServerError)
 		return
@@ -272,7 +284,7 @@ func PatchArea(c *gin.Context) {
 
 	dbArea, _ := db.GetAreaRecord(*dbDetails, int(id))
 
-	respArea := buildSingleArea(*dbArea)
+	respArea := buildSingleArea(*dbArea, true)
 	c.JSON(http.StatusAccepted, &respArea)
 
 	worker.ReloadAreas(*dbDetails)
