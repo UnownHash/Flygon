@@ -1,6 +1,6 @@
 module flygon
 
-go 1.18
+go 1.20
 
 require (
 	github.com/Depado/ginprom v1.7.11
