@@ -2,44 +2,79 @@ package config
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
+	"github.com/knadh/koanf/parsers/toml"
+	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/providers/structs"
+	"github.com/knadh/koanf/v2"
+	"strconv"
 	"strings"
 )
 
+var k = koanf.New(".")
+
 func ReadConfig() {
-	viper.SetConfigName("config")
-	viper.SetConfigType("toml")
-	viper.AddConfigPath(".")
-
-	// configure how to read environment variables
-	viper.SetEnvPrefix("flygon")
-	viper.AutomaticEnv()
-	stringReplacer := strings.NewReplacer(".", "_")
-	viper.SetEnvKeyReplacer(stringReplacer)
-
-	setDefaults()
-	readConfigErr := viper.ReadInConfig()
-	if readConfigErr != nil {
-		panic(fmt.Errorf("failed to read config file: %w", readConfigErr))
+	defaultErr := k.Load(structs.Provider(configDefinition{
+		General: generalDefinition{
+			WorkerStatsInterval: 5,
+			SaveLogs:            true,
+			Host:                "0.0.0.0",
+			Port:                9002,
+		},
+		Worker: workerDefinition{
+			RoutePartTimeout: 150,
+			LoginDelay:       20,
+		},
+		Sentry: sentry{
+			SampleRate:       1.0,
+			TracesSampleRate: 1.0,
+		},
+		Pyroscope: pyroscope{
+			ApplicationName:      "flygon",
+			MutexProfileFraction: 5,
+			BlockProfileRate:     5,
+		},
+		Prometheus: prometheus{
+			BucketSize: []float64{.00005, .000075, .0001, .00025, .0005, .00075, .001, .0025, .005, .01, .05, .1, .25, .5, 1, 2.5, 5, 10},
+		},
+	}, "koanf"), nil)
+	if defaultErr != nil {
+		fmt.Println(fmt.Errorf("failed to load default config: %w", defaultErr))
 	}
-	unmarshalErr := viper.Unmarshal(&Config)
-	if unmarshalErr != nil {
-		panic(fmt.Errorf("failed to parse config file: %w", unmarshalErr))
+
+	readConfigErr := k.Load(file.Provider("config.toml"), toml.Parser())
+	if readConfigErr != nil && readConfigErr.Error() != "open config.toml: no such file or directory" {
+		fmt.Println(fmt.Errorf("failed to read config file: %w", readConfigErr))
+	}
+
+	envLoadingErr := k.Load(ProviderWithValue("FLYGON.", ".", func(rawKey string, value string, currentMap map[string]interface{}) (string, interface{}) {
+		key := strings.ToLower(strings.TrimPrefix(rawKey, "FLYGON."))
+		return key, value
+	}), nil)
+	if envLoadingErr != nil {
+		fmt.Println(fmt.Errorf("%w", envLoadingErr))
+	}
+
+	unmarshalError := k.Unmarshal("", &Config)
+	if unmarshalError != nil {
+		panic(fmt.Errorf("failed to Unmarshal config: %w", unmarshalError))
+		return
 	}
 }
 
-func setDefaults() {
-	viper.SetDefault("general.worker_stats_interval", 5)
-	viper.SetDefault("general.save_logs", true)
-	viper.SetDefault("general.host", "0.0.0.0")
-	viper.SetDefault("general.port", 9002)
+func parseEnvVarToSlice(sliceName string, key string, value string, currentMap map[string]interface{}) {
+	splitPath := strings.Split(key, ".")
+	lastPart := splitPath[len(splitPath)-1]
+	index, _ := strconv.Atoi(splitPath[len(splitPath)-2])
 
-	viper.SetDefault("worker.route_part_timeout", 150)
-	viper.SetDefault("worker.login_delay", 20)
-	viper.SetDefault("sentry.sample_rate", 1.0)
-	viper.SetDefault("sentry.traces_sample_rate", 1.0)
-	viper.SetDefault("pyroscope.application_name", "flygon")
-	viper.SetDefault("pyroscope.mutex_profile_fraction", 5)
-	viper.SetDefault("pyroscope.block_profile_rate", 5)
-	viper.SetDefault("prometheus.bucket_size", []float64{.00005, .000075, .0001, .00025, .0005, .00075, .001, .0025, .005, .01, .05, .1, .25, .5, 1, 2.5, 5, 10})
+	// create the slice if it doesn't exist
+	if currentMap[sliceName] == nil {
+		currentMap[sliceName] = make([]interface{}, 0)
+	}
+	// create the element at index
+	if len(currentMap[sliceName].([]interface{})) <= index {
+		currentMap[sliceName] = append(currentMap[sliceName].([]interface{}), map[string]interface{}{})
+	}
+
+	// set the value in map at index in slice
+	currentMap[sliceName].([]interface{})[index].(map[string]interface{})[lastPart] = value
 }

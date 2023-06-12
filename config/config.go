@@ -1,76 +1,76 @@
 package config
 
 type configDefinition struct {
-	General    generalDefinition   `mapstructure:"general"`
-	Processors processorDefinition `mapstructure:"processors"`
-	Worker     workerDefinition    `mapstructure:"worker"`
-	Db         DbDefinition        `mapstructure:"db"`
-	Sentry     sentry              `mapstructure:"sentry"`
-	Prometheus prometheus          `mapstructure:"prometheus"`
-	Pyroscope  pyroscope           `mapstructure:"pyroscope"`
-	Koji       koji                `mapstructure:"koji"`
+	General    generalDefinition   `koanf:"general"`
+	Processors processorDefinition `koanf:"processors"`
+	Worker     workerDefinition    `koanf:"worker"`
+	Db         DbDefinition        `koanf:"db"`
+	Sentry     sentry              `koanf:"sentry"`
+	Prometheus prometheus          `koanf:"prometheus"`
+	Pyroscope  pyroscope           `koanf:"pyroscope"`
+	Koji       koji                `koanf:"koji"`
 }
 
 type generalDefinition struct {
-	WorkerStatsInterval int    `mapstructure:"worker_stats_interval"`
-	SaveLogs            bool   `mapstructure:"save_logs"`
-	DebugLogging        bool   `mapstructure:"debug_log"`
-	Host                string `mapstructure:"host"`
-	Port                int    `mapstructure:"port"`
-	ApiSecret           string `mapstructure:"api_secret"`
-	BearerToken         string `mapstructure:"bearer_token"`
-	RouteCalcUrl        string `mapstructure:"routecalc_url"`
+	WorkerStatsInterval int    `koanf:"worker_stats_interval"`
+	SaveLogs            bool   `koanf:"save_logs"`
+	DebugLogging        bool   `koanf:"debug_log"`
+	Host                string `koanf:"host"`
+	Port                int    `koanf:"port"`
+	ApiSecret           string `koanf:"api_secret"`
+	BearerToken         string `koanf:"bearer_token"`
+	RouteCalcUrl        string `koanf:"routecalc_url"`
 }
 
 type processorDefinition struct {
-	GolbatEndpoint  string   `mapstructure:"golbat_endpoint"`
-	GolbatRawBearer string   `mapstructure:"golbat_raw_bearer"`
-	GolbatApiSecret string   `mapstructure:"golbat_api_secret"`
-	RawEndpoints    []string `mapstructure:"raw_endpoints"`
+	GolbatEndpoint  string   `koanf:"golbat_endpoint"`
+	GolbatRawBearer string   `koanf:"golbat_raw_bearer"`
+	GolbatApiSecret string   `koanf:"golbat_api_secret"`
+	RawEndpoints    []string `koanf:"raw_endpoints"`
 }
 
 type workerDefinition struct {
-	LoginDelay       int `mapstructure:"login_delay"`
-	RoutePartTimeout int `mapstructure:"route_part_timeout"`
+	LoginDelay       int `koanf:"login_delay"`
+	RoutePartTimeout int `koanf:"route_part_timeout"`
 }
 
 type DbDefinition struct {
-	Host     string `mapstructure:"host"`
-	Port     int    `mapstructure:"port"`
-	User     string `mapstructure:"user"`
-	Password string `mapstructure:"password"`
-	Name     string `mapstructure:"name"`
-	MaxPool  int    `mapstructure:"max_pool"`
+	Host     string `koanf:"host"`
+	Port     int    `koanf:"port"`
+	User     string `koanf:"user"`
+	Password string `koanf:"password"`
+	Name     string `koanf:"name"`
+	MaxPool  int    `koanf:"max_pool"`
 }
 
 type sentry struct {
-	DSN              string  `mapstructure:"dsn"`
-	Debug            bool    `mapstructure:"debug"`
-	SampleRate       float64 `mapstructure:"sample_rate"`
-	EnableTracing    bool    `mapstructure:"enable_tracing"`
-	TracesSampleRate float64 `mapstructure:"traces_sample_rate"`
+	DSN              string  `koanf:"dsn"`
+	Debug            bool    `koanf:"debug"`
+	SampleRate       float64 `koanf:"sample_rate"`
+	EnableTracing    bool    `koanf:"enable_tracing"`
+	TracesSampleRate float64 `koanf:"traces_sample_rate"`
 }
 
 type pyroscope struct {
-	ApplicationName      string `mapstructure:"application_name"`
-	ServerAddress        string `mapstructure:"server_address"`
-	ApiKey               string `mapstructure:"api_key"`
-	Logger               bool   `mapstructure:"logger"`
-	MutexProfileFraction int    `mapstructure:"mutex_profile_fraction"`
-	BlockProfileRate     int    `mapstructure:"block_profile_rate"`
+	ApplicationName      string `koanf:"application_name"`
+	ServerAddress        string `koanf:"server_address"`
+	ApiKey               string `koanf:"api_key"`
+	Logger               bool   `koanf:"logger"`
+	MutexProfileFraction int    `koanf:"mutex_profile_fraction"`
+	BlockProfileRate     int    `koanf:"block_profile_rate"`
 }
 
 type prometheus struct {
-	Enabled    bool      `mapstructure:"enabled"`
-	Token      string    `mapstructure:"token"`
-	BucketSize []float64 `mapstructure:"bucket_size"`
+	Enabled    bool      `koanf:"enabled"`
+	Token      string    `koanf:"token"`
+	BucketSize []float64 `koanf:"bucket_size"`
 }
 
 type koji struct {
-	Url           string `mapstructure:"url"`
-	BearerToken   string `mapstructure:"bearer_token"`
-	LoadAtStartup bool   `mapstructure:"load_at_startup"`
-	ProjectName   string `mapstructure:"project_name"`
+	Url           string `koanf:"url"`
+	BearerToken   string `koanf:"bearer_token"`
+	LoadAtStartup bool   `koanf:"load_at_startup"`
+	ProjectName   string `koanf:"project_name"`
 }
 
 var Config configDefinition
