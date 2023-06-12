@@ -121,7 +121,7 @@ func handleInit(c *gin.Context, req ControllerBody, workerState *worker.State) {
 
 func handleHeartbeat(c *gin.Context, req ControllerBody, workerState *worker.State) {
 	log.Debugf("[CONTROLLER] [%s] Heartbeat", req.Uuid)
-	workerState.Touch(c.RemoteIP())
+	workerState.Host = c.RemoteIP()
 	respondWithOk(c)
 	return
 }
