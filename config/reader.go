@@ -13,6 +13,7 @@ import (
 var k = koanf.New(".")
 
 func ReadConfig() {
+	// load default values
 	defaultErr := k.Load(structs.Provider(configDefinition{
 		General: generalDefinition{
 			WorkerStatsInterval: 5,
@@ -41,11 +42,13 @@ func ReadConfig() {
 		fmt.Println(fmt.Errorf("failed to load default config: %w", defaultErr))
 	}
 
+	// read config from file
 	readConfigErr := k.Load(file.Provider("config.toml"), toml.Parser())
 	if readConfigErr != nil && readConfigErr.Error() != "open config.toml: no such file or directory" {
 		fmt.Println(fmt.Errorf("failed to read config file: %w", readConfigErr))
 	}
 
+	// read config from env
 	envLoadingErr := k.Load(ProviderWithValue("FLYGON.", ".", func(rawKey string, value string, currentMap map[string]interface{}) (string, interface{}) {
 		key := strings.ToLower(strings.TrimPrefix(rawKey, "FLYGON."))
 		return key, value
