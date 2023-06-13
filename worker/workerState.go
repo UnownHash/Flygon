@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"sort"
 	"sync"
 	"time"
 )
@@ -76,8 +77,17 @@ func GetWorkersWithArea(areaId int) []*State {
 
 func GetWorkers() (results []*State) {
 	statesMutex.Lock()
-	for _, v := range states {
-		results = append(results, v)
+
+	keys := make([]string, 0, len(states))
+	for k := range states {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	// When iterating over a map with a range loop, the iteration order is not specified and is not guaranteed
+	// to be the same from one iteration to the next
+	// therefore we need to sort keys first and access states by key to return an ordered list
+	for _, k := range keys {
+		results = append(results, states[k])
 	}
 	statesMutex.Unlock()
 	return results
