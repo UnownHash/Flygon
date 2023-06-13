@@ -54,8 +54,9 @@ func getValueByPath[S any](object S, path []reflect.StructField) reflect.Value {
 }
 
 func paginateAndSort[S any](context *gin.Context, collection []S) {
+	collectionLength := len(collection)
 	pageParam := context.DefaultQuery("page", "0")
-	perPageParam := context.DefaultQuery("perPage", "50")
+	perPageParam := context.DefaultQuery("perPage", strconv.Itoa(collectionLength))
 	sortByParam := context.DefaultQuery("sortBy", "")
 	orderParam := context.DefaultQuery("order", "DESC")
 
@@ -101,9 +102,8 @@ func paginateAndSort[S any](context *gin.Context, collection []S) {
 		}
 	})
 
-	collectionLength := len(collection)
 	firstIndex := page * perPage
-	lastIndex := min((page+1)*perPage, len(collection))
+	lastIndex := min((page+1)*perPage, collectionLength)
 
 	context.JSON(http.StatusOK, gin.H{
 		"data": collection[firstIndex:lastIndex],

@@ -6,7 +6,7 @@ import (
 )
 
 type ApiWorkerState struct {
-	Id        int    `json:"id"`
+	Id        string `json:"id"`
 	Uuid      string `json:"uuid"`
 	Username  string `json:"username"`
 	AreaId    int    `json:"area_id"`
@@ -26,16 +26,16 @@ func buildWorkerResponse() []ApiWorkerState {
 	workers := worker.GetWorkers()
 
 	workerList := []ApiWorkerState{}
-	for i, w := range workers {
-		workerList = append(workerList, buildSingleWorker(w, i))
+	for _, w := range workers {
+		workerList = append(workerList, buildSingleWorker(w))
 	}
 
 	return workerList
 }
 
-func buildSingleWorker(s *worker.State, i int) ApiWorkerState {
+func buildSingleWorker(s *worker.State) ApiWorkerState {
 	return ApiWorkerState{
-		Id:        i,
+		Id:        s.Uuid,
 		Uuid:      s.Uuid,
 		Username:  s.Username,
 		AreaId:    s.AreaId,
