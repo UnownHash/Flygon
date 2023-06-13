@@ -13,9 +13,18 @@ type State struct {
 	StartStep int
 	EndStep   int
 	Step      int
+	Mode      Mode
 	Host      string
 	LastSeen  int64
 }
+
+type Mode int
+
+const (
+	Mode_QuestMode   Mode = 1
+	Mode_PokemonMode Mode = 2
+	Mode_LevelMode   Mode = 3
+)
 
 var states map[string]*State
 var statesMutex sync.Mutex
@@ -29,7 +38,7 @@ func GetWorkerState(workerId string) *State {
 	defer statesMutex.Unlock()
 
 	if s, found := states[workerId]; !found {
-		newState := &State{Uuid: workerId}
+		newState := &State{Uuid: workerId, Mode: Mode_PokemonMode}
 		states[workerId] = newState
 		return newState
 	} else {

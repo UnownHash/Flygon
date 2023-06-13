@@ -6,8 +6,10 @@ import (
 	"flygon/geo"
 	"flygon/golbatapi"
 	"flygon/koji"
+	"flygon/tz"
 	"github.com/jellydator/ttlcache/v3"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slices"
 	"sync"
 	"time"
 )
@@ -16,7 +18,6 @@ type WorkerArea struct {
 	Id                int
 	Name              string
 	TargetWorkerCount int
-	route             []geo.Location
 	pokemonRoute      []geo.Location
 
 	questFence             geo.Geofence
@@ -106,13 +107,12 @@ func GetWorkerArea(areaId int) *WorkerArea {
 	return nil
 }
 
-func NewWorkerArea(id int, name string, workerCount int, route []geo.Location, questGeofence geo.Geofence, questRoute []geo.Location, questCheckHours []int) *WorkerArea {
+func NewWorkerArea(id int, name string, workerCount int, pokemonRoute []geo.Location, questGeofence geo.Geofence, questRoute []geo.Location, questCheckHours []int) *WorkerArea {
 	w := WorkerArea{
 		Id:                 id,
 		Name:               name,
 		TargetWorkerCount:  workerCount,
-		route:              route,
-		pokemonRoute:       route,
+		pokemonRoute:       pokemonRoute,
 		questFence:         questGeofence,
 		questRoute:         questRoute,
 		questCheckHours:    questCheckHours,
@@ -260,9 +260,65 @@ func RecalculateRoutePartsIfNeeded() {
 	}
 }
 
-func (p *WorkerArea) GetRouteLocationOfStep(stepNo int) geo.Location {
+func (p *WorkerArea) CheckQuests() bool {
+	if len(p.questRoute) == 0 {
+		log.Infof("QUESTCHECK: No route to check quests")
+		return false
+	}
+
+	longitude, latitude := p.questRoute[0].Longitude, p.questRoute[0].Latitude
+
+	stopTimezone := tz.SearchTimezone(latitude, longitude)
+	loc := time.Local
+
+	if stopTimezone != "" {
+		var err error
+		loc, err = time.LoadLocation(stopTimezone)
+		if err != nil {
+			log.Warnf("QUESTCHECK: Unrecognised time zone %s at %f,%f", stopTimezone, latitude, longitude)
+		}
+	}
+
+	currentHour := time.Now().In(loc).Hour()
+	year, month, day := time.Now().In(loc).Date()
+	midnight := time.Date(year, month, day, 0, 0, 0, 0, loc).Unix()
+
+	if p.questCheckLastHour == currentHour && p.questCheckLastMidnight == midnight {
+		return false
+	}
+
+	if !slices.Contains(p.questCheckHours, currentHour) {
+		return false
+	}
+
+	markQuestCheckComplete := func() {
+		p.questCheckLastHour = currentHour
+		p.questCheckLastMidnight = midnight
+	}
+
+	log.Infof("QUESTCHECK: Quest check starting at %f, %f; local time hour = %d [%s]", latitude, longitude, currentHour, stopTimezone)
+
+	firstHourInList := p.questCheckHours[0] == currentHour
+	if firstHourInList {
+		log.Infof("QUESTCHECK: First hour in list, will run quests")
+		// Clear off AR so we get these stops with no AR on quest run
+		markQuestCheckComplete()
+		return true
+	}
+	// we want to check for re-quest needed
+	return false
+}
+
+func (p *WorkerArea) GetRouteLocationOfStep(mode Mode, stepNo int) geo.Location {
 	//TODO safe check, check for length before?
-	return p.route[stepNo]
+	if mode == Mode_PokemonMode {
+		return p.pokemonRoute[stepNo]
+	} else if mode == Mode_QuestMode {
+		return p.questRoute[stepNo]
+	} else {
+		return geo.Location{}
+	}
+
 }
 
 // GetPokestopStatus Returns a cell object for given cell id, creates a new one if not seen before
@@ -316,8 +372,15 @@ func (p *WorkerArea) StartQuesting() bool {
 	return false
 }
 
-func (p *WorkerArea) RouteLength() int {
-	return len(p.route)
+func (p *WorkerArea) PokemonRouteLength() int {
+	return len(p.pokemonRoute)
+}
+func (p *WorkerArea) QuestRouteLength() int {
+	return len(p.questRoute)
+}
+
+func (p *WorkerArea) QuestCheckHours() []int {
+	return p.questCheckHours
 }
 
 func (p *WorkerArea) calculateQuestRoute() {
@@ -343,7 +406,7 @@ func (p *WorkerArea) calculateKojiQuestRoute() {
 
 // AdjustRoute allows a hot reload of the route
 func (p *WorkerArea) AdjustRoute(newRoute []geo.Location) {
-	p.route = newRoute
+	p.pokemonRoute = newRoute
 	p.RecalculateRouteParts()
 }
 

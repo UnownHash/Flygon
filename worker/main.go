@@ -82,11 +82,11 @@ func ReloadAreas(dbDetails db.DbDetails) {
 	var checked []int
 
 	for _, area := range areas {
-		areaRoute, err := db.ParseRouteFromString(area.PokemonModeRoute.ValueOrZero())
+		pokemonRoute, err := db.ParseRouteFromString(area.PokemonModeRoute.ValueOrZero())
 
 		if err != nil {
 			log.Errorf("Route in area %d:%s is malformatted - will continue as this is hot reload", area.Id, area.Name)
-			areaRoute = []geo.Location{}
+			pokemonRoute = []geo.Location{}
 		}
 
 		geofenceLocations, err := db.ParseRouteFromString(area.Geofence.ValueOrZero())
@@ -123,9 +123,9 @@ func ReloadAreas(dbDetails db.DbDetails) {
 					current.AdjustQuestFence(geo.Geofence{Fence: geofenceLocations})
 				}
 
-				if !slices.Equal(areaRoute, current.route) {
-					log.Infof("RELOAD: Area %d / %s route change", current.Id, current.Name)
-					current.AdjustRoute(areaRoute)
+				if !slices.Equal(pokemonRoute, current.pokemonRoute) {
+					log.Infof("RELOAD: Area %d / %s pokemon route change", current.Id, current.Name)
+					current.AdjustRoute(pokemonRoute)
 				}
 
 				if !slices.Equal(questRoute, current.questRoute) {
@@ -152,7 +152,7 @@ func ReloadAreas(dbDetails db.DbDetails) {
 			noWorkers := area.PokemonModeWorkers
 			areaName := area.Name
 
-			workerArea := NewWorkerArea(area.Id, areaName, noWorkers, areaRoute, geo.Geofence{Fence: geofenceLocations}, questRoute, questCheckHours)
+			workerArea := NewWorkerArea(area.Id, areaName, noWorkers, pokemonRoute, geo.Geofence{Fence: geofenceLocations}, questRoute, questCheckHours)
 			RegisterArea(workerArea)
 
 			//go workerArea.Start()

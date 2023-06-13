@@ -114,7 +114,7 @@ func handleInit(c *gin.Context, req ControllerBody, workerState *worker.State) {
 		"assigned": assigned,
 		"version":  Version,
 		"commit":   Commit,
-		"provider": "FlyGOn",
+		"provider": "Flygon",
 	})
 	return
 }
@@ -206,19 +206,24 @@ func handleGetJob(c *gin.Context, req ControllerBody, workerState *worker.State)
 		})
 		return
 	}
-	workerState.Step++
-	if workerState.Step > workerState.EndStep {
-		log.Infof("[CONTROLLER] [%s] Worker finished route", req.Uuid)
-		workerState.Step = workerState.StartStep
-	}
-
 	wa := worker.GetWorkerArea(workerState.AreaId)
 	if wa == nil {
 		log.Debugf("[CONTROLLER] [%s] Area '%d' does not exist", req.Uuid, workerState.AreaId)
 		respondWithError(c, InstanceNotFound)
 		return
 	}
-	location := wa.GetRouteLocationOfStep(workerState.Step)
+
+	workerState.Step++
+	if workerState.Step > workerState.EndStep {
+		log.Infof("[CONTROLLER] [%s] Worker finished route", req.Uuid)
+		workerState.Step = workerState.StartStep
+		// is it needed to switch to quest?
+		if wa.CheckQuests() {
+			workerState.Mode = worker.Mode_QuestMode
+		}
+	}
+
+	location := wa.GetRouteLocationOfStep(workerState.Mode, workerState.Step)
 	task := map[string]any{
 		"action":    ScanPokemon.String(),
 		"lat":       location.Latitude,
