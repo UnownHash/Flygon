@@ -190,7 +190,7 @@ func (p *WorkerArea) RecalculateRouteParts() {
 	var activeWorkers []*State
 	now := time.Now().Unix()
 	for _, ws := range workersInArea {
-		if now-ws.LastSeen <= workerUnseen {
+		if ws.LastSeen == 0 || now-ws.LastSeen <= workerUnseen {
 			activeWorkers = append(activeWorkers, ws)
 		} else {
 			ws.Step = 0
