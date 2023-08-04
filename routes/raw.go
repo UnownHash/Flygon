@@ -83,7 +83,7 @@ func Raw(c *gin.Context) {
 
 		host := c.RemoteIP()
 		ws := worker.GetWorkerState(res.Uuid)
-		ws.Touch(host)
+		ws.LastLocation(0.0, 0.0, host) //TODO we need the last location for cooldown
 		if res.TrainerLvl > 0 {
 			accountManager.SetLevel(res.Username, res.TrainerLvl)
 		}

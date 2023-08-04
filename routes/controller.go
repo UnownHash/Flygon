@@ -121,18 +121,13 @@ func handleInit(c *gin.Context, req ControllerBody, workerState *worker.State) {
 
 func handleHeartbeat(c *gin.Context, req ControllerBody, workerState *worker.State) {
 	log.Debugf("[CONTROLLER] [%s] Heartbeat", req.Uuid)
-	workerState.Host = c.RemoteIP()
+	workerState.Touch(c.RemoteIP())
 	respondWithOk(c)
 	return
 }
 
 func handleGetAccount(c *gin.Context, req ControllerBody, workerState *worker.State) {
 	log.Debugf("[CONTROLLER] [%s] GetAccount", req.Uuid)
-	a, err := workerState.GetAllocatedArea()
-	if err != nil {
-		respondWithError(c, InstanceNotFound)
-		return
-	}
 	var account = &accounts.AccountDetails{}
 	if workerState.Username != "" {
 		// reuse same account if possible -> to reuse auth token
@@ -168,11 +163,6 @@ func handleGetAccount(c *gin.Context, req ControllerBody, workerState *worker.St
 		}
 		lastLogin.Store(host, now)
 	}
-
-	workerState.Touch(host)
-
-	log.Debugf("[CONTROLLER] [%s] Recalculate route parts because of GetAccount", workerState.Uuid)
-	a.RecalculateRouteParts()
 	data := map[string]any{
 		"username": account.Username,
 		"password": account.Password,
@@ -206,17 +196,22 @@ func handleGetJob(c *gin.Context, req ControllerBody, workerState *worker.State)
 		})
 		return
 	}
-	workerState.Step++
-	if workerState.Step > workerState.EndStep {
-		log.Infof("[CONTROLLER] [%s] Worker finished route", req.Uuid)
-		workerState.Step = workerState.StartStep
-	}
 
 	wa := worker.GetWorkerArea(workerState.AreaId)
 	if wa == nil {
 		log.Debugf("[CONTROLLER] [%s] Area '%d' does not exist", req.Uuid, workerState.AreaId)
 		respondWithError(c, InstanceNotFound)
 		return
+	}
+	if workerState.EndStep == 0 && workerState.StartStep == 0 {
+		// either the worker is new or was not working well
+		log.Debugf("[CONTROLLER] [%s] Recalculate route parts", workerState.Uuid)
+		wa.RecalculateRouteParts()
+	}
+	workerState.Step++
+	if workerState.Step > workerState.EndStep {
+		log.Infof("[CONTROLLER] [%s] Worker finished route", req.Uuid)
+		workerState.Step = workerState.StartStep
 	}
 	location := wa.GetRouteLocationOfStep(workerState.Step)
 	task := map[string]any{

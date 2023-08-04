@@ -105,6 +105,10 @@ func (ws *State) ResetAreaAndRoutePart() {
 }
 
 func (ws *State) Touch(host string) {
-	ws.LastSeen = time.Now().Unix()
 	ws.Host = host
+}
+
+func (ws *State) LastLocation(lat, lon float64, host string) {
+	ws.Host = host
+	ws.LastSeen = time.Now().Unix()
 }
