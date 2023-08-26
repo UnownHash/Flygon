@@ -4,9 +4,6 @@ worker_stats = false
 worker_stats_interval = 5
 # how often worker stats are written (in minutes)
 
-koji_url = ""
-koji_bearer_token = ""
-
 save_logs = false
 debug_log = false
 debug_processor = false
