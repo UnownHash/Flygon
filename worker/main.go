@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"math"
 	"os"
 	// "time"
 
@@ -54,6 +55,18 @@ func StartAreas(dbDetails db.DbDetails) {
 
 		//go workerArea.Start()
 	}
+	// register unbound area
+	RegisterArea(&WorkerArea{
+		Id:                 math.MaxInt,
+		Name:               "unbound",
+		TargetWorkerCount:  0,
+		route:              nil,
+		pokemonRoute:       nil,
+		questFence:         geo.Geofence{},
+		questRoute:         nil,
+		questCheckHours:    nil,
+		questCheckLastHour: -1,
+	})
 
 	// come back when quests are ready
 	// if config.Config.Koji.Url != "" {

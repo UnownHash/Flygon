@@ -8,6 +8,8 @@ import (
 	"flygon/koji"
 	"github.com/jellydator/ttlcache/v3"
 	log "github.com/sirupsen/logrus"
+	"math"
+	"strings"
 	"sync"
 	"time"
 )
@@ -153,6 +155,10 @@ func (ws *State) AllocateArea() (*WorkerArea, error) {
 	// worker is already assigned to an area, use that
 	if ws.AreaId != 0 { // no area uses ID = 0, auto increment starts with 1
 		return workerAreas[ws.AreaId], nil
+	}
+	if strings.HasSuffix(ws.Uuid, "_enc") {
+		ws.AreaId = math.MaxInt
+		return workerAreas[math.MaxInt], nil
 	}
 	// Find area with the least workers
 	// Add worker to area
