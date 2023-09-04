@@ -7,6 +7,7 @@ import (
 	"flygon/worker"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
+	"math"
 	"net/http"
 	"strconv"
 	"sync"
@@ -194,6 +195,18 @@ func handleGetJob(c *gin.Context, req ControllerBody, workerState *worker.State)
 			"min_level": 30,
 			"max_level": 40,
 		})
+		return
+	}
+
+	if workerState.AreaId == math.MaxInt {
+		task := map[string]any{
+			"action":    ScanPokemon.String(),
+			"lat":       0.0,
+			"lon":       0.0,
+			"min_level": 30,
+			"max_level": 40,
+		}
+		respondWithData(c, &task)
 		return
 	}
 
