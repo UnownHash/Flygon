@@ -100,6 +100,11 @@ func Raw(c *gin.Context) {
 				log.Debugf("[RAW] [%s] Account '%s' updated with information from Game", res.Uuid, res.Username)
 			}
 		}
+		if ws.CheckLimitExceeded() {
+			log.Warnf("[RAW] [%s] Account would exceed soft limits - DISABLED ACCOUNT: [%s]", res.Uuid, res.Username)
+			accountManager.MarkDisabled(res.Username)
+
+		}
 	}()
 }
 
