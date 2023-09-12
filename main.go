@@ -7,6 +7,7 @@ import (
 	"flygon/external"
 	"flygon/golbatapi"
 	"flygon/koji"
+	"flygon/pogo"
 	"flygon/routes"
 	"flygon/tz"
 	"flygon/util"
@@ -59,16 +60,25 @@ func main() {
 	if config.Config.Koji.LoadAtStartup {
 		koji.LoadKojiAreas(&dbDetails)
 	}
+
+	requestLimits := make(map[int]int)
+	if config.Config.Tuning.RecycleGmoLimit > 0 {
+		requestLimits[int(pogo.Method_METHOD_GET_MAP_OBJECTS)] = config.Config.Tuning.RecycleGmoLimit
+	}
+	if config.Config.Tuning.RecycleEncounterLimit > 0 {
+		requestLimits[int(pogo.Method_METHOD_ENCOUNTER)] = config.Config.Tuning.RecycleEncounterLimit
+	}
+
 	routes.ConnectDatabase(&dbDetails)
 	routes.LoadAccountManager(&am)
 	worker.StartAreas(dbDetails)
 	worker.InitWorkerState()
 	worker.SetWorkerUnseen()
-	//worker.StartUnbound(dbDetails, &am, authenticationQueue)
 	if config.Config.Processors.GolbatEndpoint != "" {
 		golbatapi.SetApiUrl(config.Config.Processors.GolbatEndpoint,
 			config.Config.Processors.GolbatApiSecret)
 	}
+	worker.SetRequestLimits(requestLimits)
 	routes.SetRawEndpoints(getRawEndpointsFromConfig())
 	routes.StartGin()
 

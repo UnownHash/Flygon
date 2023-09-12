@@ -90,7 +90,11 @@ func Raw(c *gin.Context) {
 		//body, _ := ioutil.ReadAll(c.Request.Body)
 
 		for _, rawContent := range res.Contents {
-			if rawContent.Method == 2 {
+			if rawContent.Method == int(pogo.Method_METHOD_GET_MAP_OBJECTS) {
+				ws.IncrementLimit(int(pogo.Method_METHOD_GET_MAP_OBJECTS))
+			} else if rawContent.Method == int(pogo.Method_METHOD_ENCOUNTER) {
+				ws.IncrementLimit(int(pogo.Method_METHOD_ENCOUNTER))
+			} else if rawContent.Method == int(pogo.Method_METHOD_GET_PLAYER) {
 				getPlayerOutProto := decodeGetPlayerOutProto(rawContent)
 				accountManager.UpdateDetailsFromGame(res.Username, getPlayerOutProto, res.TrainerLvl)
 				log.Debugf("[RAW] [%s] Account '%s' updated with information from Game", res.Uuid, res.Username)

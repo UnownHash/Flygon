@@ -198,6 +198,18 @@ func handleGetJob(c *gin.Context, req ControllerBody, workerState *worker.State)
 		return
 	}
 
+	if workerState.CheckLimitExceeded() {
+		log.Warnf("[CONTROLLER] [%s] GetJob would exceed soft limits - DISABLED ACCOUNT: [%s]", req.Uuid, req.Username)
+		accountManager.MarkDisabled(req.Username)
+		workerState.ResetUsername()
+		respondWithData(c, &map[string]any{
+			"action":    SwitchAccount.String(),
+			"min_level": 30,
+			"max_level": 40,
+		})
+		return
+	}
+
 	if workerState.AreaId == math.MaxInt {
 		task := map[string]any{
 			"action":    ScanPokemon.String(),

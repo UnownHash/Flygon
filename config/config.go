@@ -5,6 +5,7 @@ type configDefinition struct {
 	Processors processorDefinition `koanf:"processors"`
 	Worker     workerDefinition    `koanf:"worker"`
 	Db         DbDefinition        `koanf:"db"`
+	Tuning     tuningDefinition    `koanf:"tuning"`
 	Sentry     sentry              `koanf:"sentry"`
 	Prometheus prometheus          `koanf:"prometheus"`
 	Pyroscope  pyroscope           `koanf:"pyroscope"`
@@ -41,6 +42,12 @@ type DbDefinition struct {
 	Password string `koanf:"password"`
 	Name     string `koanf:"name"`
 	MaxPool  int    `koanf:"max_pool"`
+}
+
+type tuningDefinition struct {
+	RecycleGmoLimit          int `koanf:"recycle_gmo_limit"`
+	RecycleEncounterLimit    int `koanf:"recycle_encounter_limit"`
+	MinimumAccountReuseHours int `koanf:"minimum_account_reuse_hours"`
 }
 
 type sentry struct {
