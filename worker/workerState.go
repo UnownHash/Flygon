@@ -136,3 +136,7 @@ func (ws *State) IncrementLimit(method int) {
 func (ws *State) CheckLimitExceeded() bool {
 	return ws.requestCounter.CheckLimitsExceeded()
 }
+
+func (ws *State) RequestCounts() map[int]int {
+	return ws.requestCounter.RequestCounts()
+}
