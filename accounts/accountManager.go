@@ -210,11 +210,12 @@ func (a *AccountManager) AccountExists(username string) bool {
 func (a *AccountManager) IsValidAccount(username string) (bool, error) {
 	for x := range a.accounts {
 		if a.accounts[x].Username == username {
-			time24hrAgo := time.Now().Add(-24 * time.Hour).Unix()
-			timeNow := time.Now().Unix()
+			timeNow := time.Now()
+			timeNowUnix := timeNow.Unix()
+			time24hrAgo := timeNow.Add(-24 * time.Hour).Unix()
 			return !(a.accounts[x].Suspended ||
 				a.accounts[x].Banned ||
-				int64(a.accounts[x].WarnExpiration) > timeNow ||
+				int64(a.accounts[x].WarnExpiration) > timeNowUnix ||
 				(a.accounts[x].LastDisabled.Valid && a.accounts[x].LastDisabled.Int64 > time24hrAgo)), nil
 		}
 	}
@@ -273,7 +274,6 @@ func (a *AccountManager) MarkDisabled(username string) {
 
 	for x := range a.accounts {
 		if a.accounts[x].Username == username {
-
 			a.accounts[x].LastDisabled = null.IntFrom(time.Now().Unix())
 		}
 	}
