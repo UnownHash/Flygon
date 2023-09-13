@@ -33,6 +33,14 @@ func (r *RequestCounter) RequestCounts() map[int]int {
 	return countsCopy
 }
 
+func (r *RequestCounter) ResetCounts() {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	for k, _ := range r.counts {
+		r.counts[k] = 0
+	}
+}
+
 func (r *RequestCounter) SetLimits(limits map[int]int) {
 	r.limits = limits
 }

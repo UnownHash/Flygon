@@ -140,3 +140,7 @@ func (ws *State) CheckLimitExceeded() bool {
 func (ws *State) RequestCounts() map[int]int {
 	return ws.requestCounter.RequestCounts()
 }
+
+func (ws *State) ResetCounter() {
+	ws.requestCounter.ResetCounts()
+}
