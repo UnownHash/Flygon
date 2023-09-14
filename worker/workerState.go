@@ -7,16 +7,18 @@ import (
 )
 
 type State struct {
-	Uuid      string
-	AreaId    int
-	Username  string
-	StartStep int
-	EndStep   int
-	Step      int
-	Host      string
-	LastSeen  int64
+	Uuid           string
+	AreaId         int
+	Username       string
+	StartStep      int
+	EndStep        int
+	Step           int
+	Host           string
+	LastSeen       int64
+	requestCounter *RequestCounter
 }
 
+var requestLimits map[int]int
 var states map[string]*State
 var statesMutex sync.Mutex
 
@@ -29,7 +31,11 @@ func GetWorkerState(workerId string) *State {
 	defer statesMutex.Unlock()
 
 	if s, found := states[workerId]; !found {
-		newState := &State{Uuid: workerId}
+		newState := &State{
+			Uuid:           workerId,
+			requestCounter: NewRequestCounter(),
+		}
+		newState.SetRequestLimits(requestLimits)
 		states[workerId] = newState
 		return newState
 	} else {
@@ -111,4 +117,30 @@ func (ws *State) Touch(host string) {
 func (ws *State) LastLocation(lat, lon float64, host string) {
 	ws.Host = host
 	ws.LastSeen = time.Now().Unix()
+}
+
+func SetRequestLimits(limits map[int]int) {
+	requestLimits = limits
+}
+
+func (ws *State) SetRequestLimits(limits map[int]int) {
+	if len(limits) > 0 {
+		ws.requestCounter.SetLimits(limits)
+	}
+}
+
+func (ws *State) IncrementLimit(method int) {
+	ws.requestCounter.Increment(method)
+}
+
+func (ws *State) CheckLimitExceeded() bool {
+	return ws.requestCounter.CheckLimitsExceeded()
+}
+
+func (ws *State) RequestCounts() map[int]int {
+	return ws.requestCounter.RequestCounts()
+}
+
+func (ws *State) ResetCounter() {
+	ws.requestCounter.ResetCounts()
 }

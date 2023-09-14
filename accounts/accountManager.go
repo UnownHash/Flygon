@@ -2,6 +2,7 @@ package accounts
 
 import (
 	"errors"
+	"flygon/config"
 	"flygon/db"
 	"flygon/pogo"
 	log "github.com/sirupsen/logrus"
@@ -95,20 +96,30 @@ func (a *AccountManager) GetNextAccount(testAccount func(a db.Account) bool) *Ac
 	a.accountLock.Lock()
 	defer a.accountLock.Unlock()
 
-	time24hrAgo := time.Now().Add(-24 * time.Hour).Unix()
-	timeNow := time.Now().Unix()
+	hoursDisabled := []int{24, 7 * 24, 30 * 24}
+	timeNow := time.Now()
+	timeNowUnix := timeNow.Unix()
+	minimumTimeForReuse := timeNow
+
+	if config.Config.Tuning.MinimumAccountReuseHours > 0 {
+		minimumTimeForReuse = minimumTimeForReuse.Add(-1 * time.Duration(config.Config.Tuning.MinimumAccountReuseHours) * time.Hour)
+	}
+	minimumTimeForReuseUnix := minimumTimeForReuse.Unix()
 
 	minReleased := int64(0)
 	bestAccount := -1
 	for x := 0; x < len(a.accounts); x++ {
 		account := a.accounts[x]
+		disabledTimeout := time.Duration(hoursDisabled[0]) * time.Hour
+		// TODO consecutive count
 
 		if a.inUse[x] ||
 			account.Suspended ||
 			account.Banned ||
 			account.Invalid ||
-			int64(account.WarnExpiration) > timeNow ||
-			(account.LastDisabled.Valid && account.LastDisabled.Int64 > time24hrAgo) {
+			int64(account.WarnExpiration) > timeNowUnix ||
+			(account.LastDisabled.Valid && account.LastDisabled.Int64 > timeNow.Add(-disabledTimeout).Unix()) ||
+			(account.LastSelected.Valid && account.LastSelected.Int64 > minimumTimeForReuseUnix) {
 			continue
 		}
 
@@ -132,8 +143,13 @@ func (a *AccountManager) GetNextAccount(testAccount func(a db.Account) bool) *Ac
 	}
 
 	account := &a.accounts[bestAccount]
-	if minReleased > time24hrAgo {
-		log.Warnf("Selected account %s was last released %d minutes ago, which is less than 24 hours ago. This is probably not what you want.", account.Username, (time.Now().Unix()-minReleased)/60)
+	if minReleased > timeNow.Add(-24*time.Hour).Unix() {
+		log.Warnf("Selected account %s was last released %d minutes ago, which is less than 24 hours ago. This is probably not what you want.", account.Username,
+			(time.Now().Unix()-minReleased)/60)
+	} else if minReleased > timeNow.Add(-24*7*time.Hour).Unix() {
+		log.Warnf("Selected account %s was last released %d minutes ago (%s), which is less than 1 week ago. This is probably not what you want.", account.Username,
+			(time.Now().Unix()-minReleased)/60,
+			time.Since(time.Unix(minReleased, 0)))
 	}
 
 	a.inUse[bestAccount] = true
@@ -194,11 +210,12 @@ func (a *AccountManager) AccountExists(username string) bool {
 func (a *AccountManager) IsValidAccount(username string) (bool, error) {
 	for x := range a.accounts {
 		if a.accounts[x].Username == username {
-			time24hrAgo := time.Now().Add(-24 * time.Hour).Unix()
-			timeNow := time.Now().Unix()
+			timeNow := time.Now()
+			timeNowUnix := timeNow.Unix()
+			time24hrAgo := timeNow.Add(-24 * time.Hour).Unix()
 			return !(a.accounts[x].Suspended ||
 				a.accounts[x].Banned ||
-				int64(a.accounts[x].WarnExpiration) > timeNow ||
+				int64(a.accounts[x].WarnExpiration) > timeNowUnix ||
 				(a.accounts[x].LastDisabled.Valid && a.accounts[x].LastDisabled.Int64 > time24hrAgo)), nil
 		}
 	}
@@ -257,7 +274,6 @@ func (a *AccountManager) MarkDisabled(username string) {
 
 	for x := range a.accounts {
 		if a.accounts[x].Username == username {
-			
 			a.accounts[x].LastDisabled = null.IntFrom(time.Now().Unix())
 		}
 	}

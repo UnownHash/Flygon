@@ -190,6 +190,7 @@ func handleGetJob(c *gin.Context, req ControllerBody, workerState *worker.State)
 	if !isValid || workerState.Username != req.Username {
 		log.Debugf("[CONTROLLER] [%s] Account '%s' is not valid.", req.Uuid, req.Username)
 		workerState.ResetUsername()
+		workerState.ResetCounter()
 		respondWithData(c, &map[string]any{
 			"action":    SwitchAccount.String(),
 			"min_level": 30,

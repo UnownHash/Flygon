@@ -46,6 +46,11 @@ user = ""
 password = ""
 name = "flygon"
 
+[tuning]
+recycle_gmo_limit = 4950
+recycle_encounter_limit = 9950
+minimum_account_reuse_hours = 168
+
 [sentry]
 dsn = ""
 
