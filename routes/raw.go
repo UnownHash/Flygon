@@ -101,11 +101,11 @@ func Raw(c *gin.Context) {
 			}
 		}
 		if ws.CheckLimitExceeded() {
-			log.Warnf("[RAW] [%s] [%s] Account would exceed soft limits - DISABLED ACCOUNT", res.Uuid, res.Username)
 			if isValid, _ := accountManager.IsValidAccount(res.Username); isValid {
+				log.Warnf("[RAW] [%s] [%s] Account would exceed soft limits - DISABLED ACCOUNT", res.Uuid, res.Username)
 				accountManager.MarkDisabled(res.Username)
+				log.Debugf("[RAW] [%s] [%s] Account limits: %v", res.Uuid, res.Username, ws.RequestCounts())
 			}
-			log.Infof("[RAW] [%s] [%s] Account limits: %v", res.Uuid, res.Username, ws.RequestCounts())
 		}
 	}()
 }
