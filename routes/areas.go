@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"math"
 	"net/http"
 	"strconv"
 
@@ -90,6 +91,11 @@ func GetOneArea(context *gin.Context) {
 	if conversionError != nil {
 		log.Warnf("GET /areas/%s Error during api %v", idParam, conversionError)
 		context.JSON(http.StatusBadRequest, gin.H{"error": conversionError.Error()})
+		return
+	}
+
+	if id == math.MaxInt32 {
+		context.JSON(http.StatusNotFound, gin.H{"error": "unbound enc can't be requested"})
 		return
 	}
 

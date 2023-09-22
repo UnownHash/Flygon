@@ -199,7 +199,7 @@ func handleGetJob(c *gin.Context, req ControllerBody, workerState *worker.State)
 		return
 	}
 
-	if workerState.AreaId == math.MaxInt {
+	if workerState.AreaId == math.MaxInt32 {
 		task := map[string]any{
 			"action":    ScanPokemon.String(),
 			"lat":       0.0,

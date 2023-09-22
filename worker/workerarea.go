@@ -157,8 +157,8 @@ func (ws *State) AllocateArea() (*WorkerArea, error) {
 		return workerAreas[ws.AreaId], nil
 	}
 	if strings.HasSuffix(ws.Uuid, "_enc") {
-		ws.AreaId = math.MaxInt
-		return workerAreas[math.MaxInt], nil
+		ws.AreaId = math.MaxInt32
+		return workerAreas[math.MaxInt32], nil
 	}
 	// Find area with the least workers
 	// Add worker to area
