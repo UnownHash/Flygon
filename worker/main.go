@@ -57,7 +57,7 @@ func StartAreas(dbDetails db.DbDetails) {
 	}
 	// register unbound area
 	RegisterArea(&WorkerArea{
-		Id:                 math.MaxInt,
+		Id:                 math.MaxInt32,
 		Name:               "unbound",
 		TargetWorkerCount:  0,
 		route:              nil,
