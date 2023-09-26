@@ -196,12 +196,11 @@ func (p *WorkerArea) RecalculateRouteParts() {
 	var activeWorkers []*State
 	now := time.Now().Unix()
 	for _, ws := range workersInArea {
-		if ws.LastSeen == 0 || now-ws.LastSeen <= workerUnseen {
+		if now-ws.LastSeen <= workerUnseen {
 			activeWorkers = append(activeWorkers, ws)
 		} else {
-			ws.Step = 0
-			ws.StartStep = 0
-			ws.EndStep = 0
+			log.Warnf("[WORKERAREA] Reset route parts of worker %s", ws.Uuid)
+			ws.ResetAreaAndRoutePart()
 		}
 	}
 
@@ -227,7 +226,7 @@ func (p *WorkerArea) RecalculateRouteParts() {
 		}
 
 		// Update worker states
-		ws := workersInArea[i]
+		ws := activeWorkers[i]
 		ws.StartStep = startStep
 		ws.EndStep = endStep
 		if ws.Step < ws.StartStep || ws.Step > ws.EndStep {
