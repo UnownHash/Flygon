@@ -111,6 +111,7 @@ func handleInit(c *gin.Context, req ControllerBody, workerState *worker.State) {
 		log.Infof("[CONTROLLER] [%s] Allocated area %d:%s to worker", req.Uuid, workerState.AreaId, a.Name)
 		assigned = true
 	}
+	workerState.Touch(c.RemoteIP())
 	respondWithData(c, &map[string]any{
 		"assigned": assigned,
 		"version":  Version,
