@@ -145,6 +145,7 @@ func handleGetAccount(c *gin.Context, req ControllerBody, workerState *worker.St
 	}
 
 	if account == nil {
+		log.Warnf("[CONTROLLER] [%s] No account left to use", workerState.Uuid)
 		respondWithError(c, NoAccountLeft)
 		return
 	}
