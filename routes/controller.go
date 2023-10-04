@@ -140,6 +140,7 @@ func handleGetAccount(c *gin.Context, req ControllerBody, workerState *worker.St
 			account = accountManager.GetNextAccount(accounts.SelectLevel30)
 		}
 	} else {
+		accountManager.ReleaseAccount(workerState.Username)
 		account = accountManager.GetNextAccount(accounts.SelectLevel30)
 	}
 
