@@ -115,6 +115,12 @@ func (ws *State) Unlock() {
 	ws.mu.Unlock()
 }
 
+func (ws *State) SetUsername(username string) {
+	ws.Lock()
+	defer ws.Unlock()
+	ws.Username = username
+}
+
 func (ws *State) ResetUsername() {
 	ws.Lock()
 	defer ws.Unlock()

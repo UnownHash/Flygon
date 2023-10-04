@@ -150,7 +150,7 @@ func handleGetAccount(c *gin.Context, req ControllerBody, workerState *worker.St
 		respondWithError(c, NoAccountLeft)
 		return
 	}
-	workerState.Username = account.Username
+	workerState.SetUsername(account.Username)
 	host := c.RemoteIP()
 	if loginDelay := config.Config.Worker.LoginDelay; loginDelay > 0 {
 		now := time.Now().Unix()
