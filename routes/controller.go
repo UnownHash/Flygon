@@ -5,6 +5,7 @@ import (
 	"flygon/config"
 	"flygon/external"
 	"flygon/worker"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"math"
@@ -191,7 +192,13 @@ func handleGetJob(c *gin.Context, req ControllerBody, workerState *worker.State)
 		return
 	}
 	if !isValid || workerState.Username != req.Username {
-		log.Debugf("[CONTROLLER] [%s] Account '%s' is not valid.", req.Uuid, req.Username)
+		var message string
+		if workerState.Username != req.Username {
+			message = fmt.Sprintf("is not equal to assigned worker account '%s'", workerState.Username)
+		} else {
+			message = "is not valid"
+		}
+		log.Debugf("[CONTROLLER] [%s] Account '%s' %s. Switch Account.", req.Uuid, req.Username, message)
 		workerState.ResetUsername()
 		workerState.ResetCounter()
 		respondWithData(c, &map[string]any{
