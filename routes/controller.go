@@ -200,6 +200,7 @@ func handleGetJob(c *gin.Context, req ControllerBody, workerState *worker.State)
 		}
 		log.Debugf("[CONTROLLER] [%s] Account '%s' %s. Switch Account.", req.Uuid, req.Username, message)
 		workerState.ResetUsername()
+		accountManager.ReleaseAccount(req.Username)
 		workerState.ResetCounter()
 		respondWithData(c, &map[string]any{
 			"action":    SwitchAccount.String(),
