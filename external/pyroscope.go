@@ -2,10 +2,11 @@ package external
 
 import (
 	"flygon/config"
-	"github.com/pyroscope-io/client/pyroscope"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"runtime"
+
+	"github.com/grafana/pyroscope-go"
+	log "github.com/sirupsen/logrus"
 )
 
 func InitPyroscope() {
