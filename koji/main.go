@@ -92,10 +92,6 @@ func LoadKojiAreas(details *db.DbDetails) {
 		return
 	}
 
-	if err != nil {
-		log.Errorf("[KOJI]: %s", err)
-		return
-	}
 	var backgroundProcesses sync.WaitGroup
 
 	parallelSem := make(chan bool, 50)

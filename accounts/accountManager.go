@@ -5,10 +5,11 @@ import (
 	"flygon/config"
 	"flygon/db"
 	"flygon/pogo"
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/guregu/null.v4"
 	"sync"
 	"time"
+
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/guregu/null.v4"
 )
 
 type AccountDetails struct {
@@ -86,6 +87,8 @@ func (a *AccountManager) ReloadAccounts() {
 			a.accounts = append(a.accounts[:x], a.accounts[x+1:]...)
 			a.inUse = append(a.inUse[:x], a.inUse[x+1:]...)
 			foundRecords = append(foundRecords[:x], foundRecords[x+1:]...)
+			// 'x' now points to next record, so we need to repeat
+			x--
 		}
 	}
 }
